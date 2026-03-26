@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <defs>
+    <!-- Background radial -->
+    <radialGradient id="bgGrad" cx="50%" cy="48%" r="52%">
+      <stop offset="0%" stop-color="#12202e"/>
+      <stop offset="100%" stop-color="#080f17"/>
+    </radialGradient>
+
+    <!-- Fiber glow effects via filter approximation (solid, no blur) -->
+
+    <!-- FSL amber gradient along fiber -->
+    <linearGradient id="fslA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF9F27" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#EF9F27" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#EF9F27" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="fslB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BA7517" stop-opacity="0.15"/>
+      <stop offset="60%" stop-color="#EF9F27" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FAC775" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- MRtrix teal gradient -->
+    <linearGradient id="mrtA" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#1D9E75" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="mrtB" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0F6E56" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#1D9E75" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#9FE1CB" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- DIPY purple gradient -->
+    <linearGradient id="dipA" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7F77DD" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#7F77DD" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#AFA9EC" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="dipB" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#534AB7" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#7F77DD" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#CECBF6" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <!-- Extra cross fibers -->
+    <linearGradient id="blueA" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#378ADD" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#378ADD" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#378ADD" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="pinkA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4537E" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#D4537E" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#D4537E" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- Center glow rings -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#EF9F27" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#EF9F27" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="haloGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/>
+    </radialGradient>
+
+    <clipPath id="mainCircle">
+      <circle cx="600" cy="600" r="540"/>
+    </clipPath>
+  </defs>
+
+  <!-- ── BACKGROUND ── -->
+  <circle cx="600" cy="600" r="600" fill="#080f17"/>
+  <circle cx="600" cy="600" r="540" fill="url(#bgGrad)"/>
+
+  <!-- Subtle concentric rings -->
+  <circle cx="600" cy="600" r="480" fill="none" stroke="#1a2d42" stroke-width="1" stroke-dasharray="6 10"/>
+  <circle cx="600" cy="600" r="360" fill="none" stroke="#1a2d42" stroke-width="0.8" stroke-dasharray="4 8"/>
+  <circle cx="600" cy="600" r="240" fill="none" stroke="#1a2d42" stroke-width="0.6" stroke-dasharray="3 7"/>
+  <circle cx="600" cy="600" r="130" fill="none" stroke="#1e3550" stroke-width="0.5"/>
+
+  <!-- Cross hair guides (very faint) -->
+  <line x1="600" y1="60" x2="600" y2="1140" stroke="#1a2d42" stroke-width="0.5" stroke-dasharray="2 12"/>
+  <line x1="60" y1="600" x2="1140" y2="600" stroke="#1a2d42" stroke-width="0.5" stroke-dasharray="2 12"/>
+
+  <!-- ── FSL FIBERS (amber/orange) — upper left ── -->
+  <!-- Main thick fiber -->
+  <path d="M535 555 Q400 430 330 310 Q285 225 300 165 Q318 108 375 105 Q432 103 470 158 Q510 215 535 315 Q548 390 550 520" fill="none" stroke="url(#fslA)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Secondary -->
+  <path d="M525 565 Q378 460 295 330 Q248 250 262 185 Q278 128 338 124 Q395 120 435 178 Q475 238 502 350 Q518 425 522 545" fill="none" stroke="url(#fslB)" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Tertiary thin -->
+  <path d="M515 575 Q358 490 268 355 Q215 275 228 205 Q245 148 305 144 Q360 140 400 198 Q442 260 468 378 Q485 458 492 568" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <!-- Extra micro fibers -->
+  <path d="M540 545 Q430 410 372 278 Q342 205 368 158 Q395 115 445 120 Q488 125 512 175 Q538 228 550 360 Q556 440 554 530" fill="none" stroke="#FAC775" stroke-width="1" stroke-linecap="round" opacity="0.2"/>
+  <path d="M530 540 Q445 445 395 320 Q365 248 385 192 Q408 142 460 146 Q505 150 525 202 Q547 258 556 390" fill="none" stroke="#EF9F27" stroke-width="1" stroke-linecap="round" opacity="0.18"/>
+
+  <!-- ── MRtrix FIBERS (teal/green) — upper right ── -->
+  <path d="M640 555 Q760 425 840 300 Q885 220 875 158 Q860 105 808 100 Q755 96 715 152 Q676 208 654 318 Q638 395 635 530" fill="none" stroke="url(#mrtA)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M650 565 Q780 455 865 325 Q912 245 900 180 Q883 124 828 120 Q773 116 730 174 Q688 234 668 350 Q652 430 648 550" fill="none" stroke="url(#mrtB)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M660 575 Q798 490 890 360 Q938 280 924 208 Q905 150 848 147 Q793 143 748 202 Q704 264 684 385 Q668 468 662 570" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <path d="M635 545 Q748 408 820 278 Q858 200 850 152 Q835 108 785 108 Q740 108 708 162 Q672 220 656 355 Q646 438 640 528" fill="none" stroke="#9FE1CB" stroke-width="1" stroke-linecap="round" opacity="0.2"/>
+  <path d="M644 540 Q745 450 812 328 Q852 255 842 200 Q825 152 778 152 Q735 152 703 208 Q668 268 654 400" fill="none" stroke="#1D9E75" stroke-width="1" stroke-linecap="round" opacity="0.18"/>
+
+  <!-- ── DIPY FIBERS (purple) — lower left ── -->
+  <path d="M548 650 Q415 720 308 808 Q238 868 240 928 Q242 978 288 1000 Q338 1020 390 992 Q440 965 468 900 Q498 832 520 720 Q534 680 545 648" fill="none" stroke="url(#dipA)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M558 658 Q435 732 325 825 Q252 888 255 948 Q258 1000 305 1020 Q355 1038 405 1008 Q454 978 480 912 Q508 843 528 728 Q540 688 552 658" fill="none" stroke="url(#dipB)" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M568 668 Q455 745 342 840 Q268 905 270 968 Q273 1018 320 1038 Q370 1056 420 1024 Q468 992 492 924 Q518 852 536 735 Q548 695 560 668" fill="none" stroke="#7F77DD" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+  <path d="M542 645 Q398 712 288 796 Q218 855 222 915 Q226 965 272 986 Q322 1005 372 978 Q422 950 450 885 Q480 816 504 706" fill="none" stroke="#CECBF6" stroke-width="1" stroke-linecap="round" opacity="0.2"/>
+
+  <!-- ── BLUE FIBERS — lower right ── -->
+  <path d="M655 648 Q775 720 868 808 Q930 868 928 928 Q925 978 882 1000 Q835 1020 785 992 Q740 965 715 900 Q688 832 670 720 Q660 680 652 648" fill="none" stroke="url(#blueA)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M662 658 Q790 735 885 828 Q948 890 945 950 Q942 1002 896 1022 Q848 1040 798 1010 Q752 982 725 915 Q696 845 678 730 Q668 690 660 658" fill="none" stroke="#378ADD" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+  <path d="M648 642 Q760 710 848 792 Q908 850 906 908 Q902 958 860 978 Q814 998 766 972 Q722 946 698 882 Q672 815 656 706" fill="none" stroke="#85B7EB" stroke-width="1.2" stroke-linecap="round" opacity="0.22"/>
+
+  <!-- ── PINK CROSS FIBERS — right side ── -->
+  <path d="M652 578 Q745 545 830 510 Q908 476 940 430 Q968 386 948 348 Q928 312 888 308 Q848 306 812 334 Q775 362 744 414 Q714 466 672 560" fill="none" stroke="url(#pinkA)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M658 588 Q755 558 842 525 Q922 492 952 445 Q978 400 958 360 Q936 322 895 318 Q852 315 815 344 Q778 374 746 428 Q714 482 676 572" fill="none" stroke="#D4537E" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- ── CENTRAL BRAIN ── -->
+  <!-- Brain outer shell -->
+  <ellipse cx="600" cy="600" r="128" ry="118" fill="#0d1e2e" stroke="#22384f" stroke-width="2"/>
+
+  <!-- Brain hemisphere divider -->
+  <path d="M600 485 Q598 520 600 600 Q602 680 600 718" fill="none" stroke="#22384f" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Brain fold details — left hemisphere -->
+  <path d="M510 555 Q530 530 558 542 Q572 550 568 572" fill="none" stroke="#22384f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M568 572 Q578 590 598 588 Q618 585 622 565 Q625 545 612 535" fill="none" stroke="#22384f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M505 600 Q520 582 545 588 Q562 594 560 614" fill="none" stroke="#22384f" stroke-width="2" stroke-linecap="round"/>
+  <path d="M510 635 Q528 618 552 625 Q566 632 562 652" fill="none" stroke="#22384f" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Brain fold details — right hemisphere -->
+  <path d="M688 555 Q668 530 640 542 Q626 550 630 572" fill="none" stroke="#22384f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M630 572 Q620 590 602 588" fill="none" stroke="#22384f" stroke-width="2" stroke-linecap="round"/>
+  <path d="M694 600 Q678 582 654 588 Q637 594 638 614" fill="none" stroke="#22384f" stroke-width="2" stroke-linecap="round"/>
+  <path d="M688 635 Q670 618 647 625 Q633 632 636 652" fill="none" stroke="#22384f" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Halo glow behind center -->
+  <circle cx="600" cy="600" r="55" fill="url(#haloGlow)"/>
+
+  <!-- Center origin point — pulsing rings -->
+  <circle cx="600" cy="600" r="42" fill="none" stroke="#1D9E75" stroke-width="1" opacity="0.4"/>
+  <circle cx="600" cy="600" r="32" fill="none" stroke="#EF9F27" stroke-width="1.2" opacity="0.5"/>
+  <circle cx="600" cy="600" r="20" fill="#142030" stroke="#7F77DD" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="600" cy="600" r="10" fill="url(#coreGlow)"/>
+  <circle cx="600" cy="600" r="4" fill="#ffffff"/>
+
+  <!-- ── TOOL BADGE — FSL top left ── -->
+  <rect x="138" y="155" width="140" height="50" rx="10" fill="#EF9F27" fill-opacity="0.12" stroke="#EF9F27" stroke-width="1.5" stroke-opacity="0.7"/>
+  <text x="208" y="186" text-anchor="middle" font-family="'Courier New', monospace" font-size="24" font-weight="700" fill="#EF9F27" opacity="0.95">FSL</text>
+
+  <!-- ── TOOL BADGE — MRtrix3 top right ── -->
+  <rect x="894" y="140" width="168" height="50" rx="10" fill="#1D9E75" fill-opacity="0.12" stroke="#1D9E75" stroke-width="1.5" stroke-opacity="0.7"/>
+  <text x="978" y="171" text-anchor="middle" font-family="'Courier New', monospace" font-size="24" font-weight="700" fill="#1D9E75" opacity="0.95">MRtrix3</text>
+
+  <!-- ── TOOL BADGE — DIPY bottom left ── -->
+  <rect x="148" y="1010" width="140" height="50" rx="10" fill="#7F77DD" fill-opacity="0.12" stroke="#7F77DD" stroke-width="1.5" stroke-opacity="0.7"/>
+  <text x="218" y="1041" text-anchor="middle" font-family="'Courier New', monospace" font-size="24" font-weight="700" fill="#7F77DD" opacity="0.95">DIPY</text>
+
+  <!-- ── PROJECT TITLE ── -->
+  <text x="600" y="856" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="52" font-weight="500" fill="#f0f4f8" opacity="0.96" letter-spacing="1">dMRI Rosetta Stone</text>
+  <text x="600" y="898" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="400" fill="#4a7a9b" letter-spacing="5">CROSS-TOOL · OPEN · REPRODUCIBLE</text>
+
+  <!-- OHBM Brainhack 2026 tag -->
+  <text x="600" y="1100" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="400" fill="#2a4a62" letter-spacing="3">OHBM BRAINHACK · BORDEAUX 2026</text>
+
+  <!-- Outer border ring -->
+  <circle cx="600" cy="600" r="579" fill="none" stroke="#1a2d42" stroke-width="2"/>
+  <circle cx="600" cy="600" r="540" fill="none" stroke="#1e3550" stroke-width="1.5"/>
+</svg>
