@@ -1,0 +1,33 @@
+name: dmri-rosetta
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - jupyter
+  - jupyterlab
+  - notebook
+  - numpy
+  - scipy
+  - matplotlib
+  - nibabel
+  - nilearn
+  - pandas
+  - seaborn
+  - tqdm
+  - h5py
+  - scikit-image
+  - scikit-learn
+  - networkx
+  - pip:
+    - dipy
+    - jupyter-book
+    - sphinx-togglebutton
+    - sphinx-copybutton
+    - sphinxcontrib-bibtex
+    - fury
+    - boto3          # for HCP S3 download
+    - awscli
+    - myst-nb
+    - myst-parser

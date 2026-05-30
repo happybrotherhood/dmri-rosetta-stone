@@ -1,0 +1,52 @@
+# DMRI Rosetta Stone - Jupyter Book Configuration
+title: "dMRI Rosetta Stone"
+author: "DMRI Rosetta Stone Contributors"
+logo: assets/logo.png
+
+# Force re-execution of notebooks on each build
+execute:
+  execute_notebooks: "off"   # Set to "auto" when running with real data
+  timeout: 600
+
+# HTML settings
+html:
+  use_issues_button: true
+  use_repository_button: true
+  use_edit_page_button: true
+  home_page_in_navbar: false
+  extra_navbar: ""
+  google_analytics_id: ""
+  comments:
+    hypothesis: false
+
+# Launch buttons (Binder / Colab)
+launch_buttons:
+  notebook_interface: "jupyterlab"
+  binderhub_url: "https://mybinder.org"
+  colab_url: "https://colab.research.google.com"
+
+# Repository info
+repository:
+  url: https://github.com/happybrotherhood/dmri-rosetta-stone
+  path_to_book: "."
+  branch: main
+
+# Bibliography
+bibtex_bibfiles:
+  - references.bib
+
+# Sphinx extensions
+sphinx:
+  extra_extensions:
+    - sphinx_togglebutton
+    - sphinx_copybutton
+    - sphinxcontrib.bibtex
+  config:
+    html_theme: "sphinx_book_theme"
+    html_theme_options:
+      show_toc_level: 2
+      repository_url: "https://github.com/happybrotherhood/dmri-rosetta-stone"
+      use_repository_button: true
+      use_issues_button: true
+      logo_only: false
+    suppress_warnings: ["mystnb.unknown_mime_type"]

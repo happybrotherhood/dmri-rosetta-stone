@@ -1,0 +1,67 @@
+format: jb-book
+root: intro
+
+parts:
+  - caption: "Getting Started"
+    chapters:
+      - file: notebooks/00_introduction/00_what_is_dmri
+        title: "What is Diffusion MRI?"
+      - file: notebooks/00_introduction/01_tools_overview
+        title: "FSL, MRtrix3, and DIPY: A Comparison"
+      - file: notebooks/00_introduction/02_data_setup
+        title: "Setting Up HCP Data & Environment"
+
+  - caption: "Module 1: Preprocessing"
+    chapters:
+      - file: notebooks/01_preprocessing/00_overview
+        title: "Why Preprocessing Matters"
+      - file: notebooks/01_preprocessing/01_denoising
+        title: "Denoising: MP-PCA"
+      - file: notebooks/01_preprocessing/02_gibbs_removal
+        title: "Gibbs Ringing Removal"
+      - file: notebooks/01_preprocessing/03_eddy_correction
+        title: "Motion & Eddy Current Correction"
+      - file: notebooks/01_preprocessing/04_bias_correction
+        title: "Bias Field Correction"
+
+  - caption: "Module 2: Local Diffusion Modeling"
+    chapters:
+      - file: notebooks/02_local_modeling/00_overview
+        title: "From Signal to Model"
+      - file: notebooks/02_local_modeling/01_dti
+        title: "Diffusion Tensor Imaging (DTI)"
+      - file: notebooks/02_local_modeling/02_csd
+        title: "Constrained Spherical Deconvolution (CSD)"
+      - file: notebooks/02_local_modeling/03_comparison
+        title: "DTI vs CSD: When to Use Which"
+
+  - caption: "Module 3: Tractography"
+    chapters:
+      - file: notebooks/03_tractography/00_overview
+        title: "How Tractography Works"
+      - file: notebooks/03_tractography/01_deterministic
+        title: "Deterministic Tractography"
+      - file: notebooks/03_tractography/02_probabilistic
+        title: "Probabilistic Tractography"
+      - file: notebooks/03_tractography/03_filtering
+        title: "Streamline Filtering (SIFT/SIFT2)"
+
+  - caption: "Module 4: Structural Connectomics"
+    chapters:
+      - file: notebooks/04_connectomics/00_overview
+        title: "What Is a Connectome?"
+      - file: notebooks/04_connectomics/01_parcellation
+        title: "Brain Parcellation & Atlases"
+      - file: notebooks/04_connectomics/02_connectivity_matrices
+        title: "Building Connectivity Matrices"
+
+  - caption: "Module 5: Reproducibility"
+    chapters:
+      - file: notebooks/05_reproducibility/00_overview
+        title: "Why Reproducibility Matters"
+      - file: notebooks/05_reproducibility/01_qc_metrics
+        title: "Quality Control Metrics"
+      - file: notebooks/05_reproducibility/02_critical_evaluation
+        title: "Critically Evaluating Your Results"
+      - file: notebooks/05_reproducibility/03_test_retest
+        title: "Test-Retest Reliability"
