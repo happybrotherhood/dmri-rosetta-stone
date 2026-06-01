@@ -13,8 +13,8 @@ parts:
 
   - caption: "Module 1: Preprocessing"
     chapters:
-      - file: notebooks/01_preprocessing/00_overview
-        title: "Why Preprocessing Matters"
+      - file: notebooks/01_preprocessing/00_brain_extraction
+        title: "Brain Extraction (BET)"
       - file: notebooks/01_preprocessing/01_denoising
         title: "Denoising: MP-PCA"
       - file: notebooks/01_preprocessing/02_gibbs_removal
@@ -65,3 +65,16 @@ parts:
         title: "Critically Evaluating Your Results"
       - file: notebooks/05_reproducibility/03_test_retest
         title: "Test-Retest Reliability"
+
+  - caption: "Module 6: Group Analysis"
+    chapters:
+      - file: notebooks/06_group_analysis/00_overview
+        title: "From Single Subject to Group"
+      - file: notebooks/06_group_analysis/01_registration
+        title: "Registration to Standard Space"
+      - file: notebooks/06_group_analysis/02_tbss
+        title: "Tract-Based Spatial Statistics (TBSS)"
+      - file: notebooks/06_group_analysis/03_fixel_based_analysis
+        title: "Fixel-Based Analysis (FBA)"
+      - file: notebooks/06_group_analysis/04_statistics
+        title: "Statistical Testing & Interpretation"
