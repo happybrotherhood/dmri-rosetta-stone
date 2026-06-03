@@ -1,43 +1,40 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # dMRI Rosetta Stone — FSL + MRtrix3 + DIPY + Streamlit
 #
-# Strategy: start from brainlife/fsl (FSL already installed + configured),
-# add MRtrix3 via conda, add Python packages via pip.
-# No package manager fights — FSL comes pre-baked.
+# Multi-stage build:
+#   Stage 1 (mrtrix3)  → official MRtrix3 image, find where binaries live
+#   Stage 2 (final)    → brainlife/fsl base + copy MRtrix3 bins + Python
+#
+# No conda for MRtrix3 — copy pre-built binaries from the official image.
 #
 # Build:  docker build --platform linux/amd64 -t dmri-rosetta .
 # Run:    docker run  --platform linux/amd64 -p 8501:7860 dmri-rosetta
 # Open:   http://localhost:8501
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── Stage 1: MRtrix3 source ───────────────────────────────────────────────────
+FROM mrtrix3/mrtrix3:latest AS mrtrix3_stage
+
+# ── Stage 2: Final image ──────────────────────────────────────────────────────
 FROM brainlife/fsl:6.0.7.22
 
-# FSL is already installed at /usr/local/fsl
-# FSLDIR, PATH, and FSLOUTPUTTYPE are already set in this image
+# FSL is pre-installed at /usr/local/fsl with FSLDIR and PATH already set
 
-# ── 1. Extra system packages ──────────────────────────────────────────────────
+# ── 1. Copy MRtrix3 binaries from official image ──────────────────────────────
+COPY --from=mrtrix3_stage /mrtrix3 /opt/mrtrix3
+ENV PATH="/opt/mrtrix3/bin:${PATH}"
+
+# ── 2. System packages the app needs ─────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         wget \
+        python3-pip \
         libgl1-mesa-glx \
         libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# ── 2. Miniconda (needed for MRtrix3) ────────────────────────────────────────
-RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-        -O /tmp/miniconda.sh \
-    && bash /tmp/miniconda.sh -b -p /opt/conda \
-    && rm /tmp/miniconda.sh
-
-ENV PATH="/opt/conda/bin:${PATH}"
-
-# ── 3. MRtrix3 ────────────────────────────────────────────────────────────────
-RUN conda install -y -n base -c conda-forge mamba \
-    && mamba install -y -c mrtrix3 -c conda-forge mrtrix3 \
-    && conda clean -afy
-
-# ── 4. Python packages ────────────────────────────────────────────────────────
-RUN pip install --no-cache-dir \
+# ── 3. Python packages ────────────────────────────────────────────────────────
+RUN pip3 install --no-cache-dir \
         "streamlit>=1.40" \
         "nibabel>=5.0" \
         "numpy>=1.24,<2.0" \
@@ -48,13 +45,13 @@ RUN pip install --no-cache-dir \
         "dipy>=1.7" \
         "scikit-image>=0.20"
 
-# ── 5. App ────────────────────────────────────────────────────────────────────
+# ── 4. App ────────────────────────────────────────────────────────────────────
 WORKDIR /app
 COPY . .
 
-RUN python scripts/make_test_data.py --subject 100307 --outdir data/hcp
+RUN python3 scripts/make_test_data.py --subject 100307 --outdir data/hcp
 
-# ── 6. Runtime ────────────────────────────────────────────────────────────────
+# ── 5. Runtime ────────────────────────────────────────────────────────────────
 ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
