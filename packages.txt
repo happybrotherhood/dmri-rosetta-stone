@@ -1,0 +1,3 @@
+# System packages for Streamlit Community Cloud
+# FSL and MRtrix3 cannot be installed here — app shows graceful ✗ for those tools
+# All Python-based steps (DIPY, visualization, QC) work fully

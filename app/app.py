@@ -89,6 +89,20 @@ def run_cmd(cmd: list[str], label: str) -> tuple[bool, str]:
     return ok, out.strip()
 
 
+@st.cache_resource
+def ensure_demo_data(subject: str = "100307"):
+    """Generate synthetic data on first run — needed for cloud deployment."""
+    dd = ROOT / "data" / "hcp" / subject / "T1w" / "Diffusion"
+    if not (dd / "data.nii.gz").exists():
+        subprocess.run(
+            [sys.executable,
+             str(ROOT / "scripts" / "make_test_data.py"),
+             "--subject", subject,
+             "--outdir", str(ROOT / "data" / "hcp")],
+            capture_output=True
+        )
+
+
 def data_dir() -> Path:
     return ROOT / "data" / "hcp" / st.session_state.get("subject", "100307") \
            / "T1w" / "Diffusion"
@@ -891,6 +905,7 @@ def page_qc():
 # ── Main router ───────────────────────────────────────────────────────────────
 
 def main():
+    ensure_demo_data()   # auto-generate synthetic data on cloud / first run
     page = sidebar()
 
     if page == "🏠 Introduction":
