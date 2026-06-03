@@ -1,68 +1,94 @@
-# dMRI Rosetta Stone — Docker image with FSL + MRtrix3 + DIPY
+# ─────────────────────────────────────────────────────────────────────────────
+# dMRI Rosetta Stone
+# FSL + MRtrix3 + DIPY + Streamlit in one container
 #
-# Build:  docker build -t dmri-rosetta-stone .
-# Run:    docker run -p 8501:8501 dmri-rosetta-stone
+# Local test:
+#   docker build -t dmri-rosetta .
+#   docker run -p 8501:7860 dmri-rosetta
+#   open http://localhost:8501
 #
-# For HuggingFace Spaces: port must be 7860
+# HuggingFace Spaces: push this repo → HF builds automatically (port 7860)
+# ─────────────────────────────────────────────────────────────────────────────
 
 FROM continuumio/miniconda3:24.1.2-0
 
-# ── System deps ───────────────────────────────────────────────────────────────
+# ── 1. System libraries that FSL/MRtrix3 need ─────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    dc \
-    wget \
-    git \
-    libgl1 \
-    libglib2.0-0 \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+        bc \
+        dc \
+        file \
+        libfftw3-dev \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libgomp1 \
+        liblapack-dev \
+        wget \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
 
-# ── Conda environment ─────────────────────────────────────────────────────────
-# Install FSL core tools via FSL's official conda channel (FSL 6.0.7+)
-# We only install the tools the app actually uses — avoids pulling 5 GB of FSL
-RUN conda install -y -c conda-forge -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
-    fsl-avwutils \
-    fsl-bet2 \
-    fsl-dtifit \
-    fsl-fast \
-    fsl-flirt \
-    fsl-fnirt \
-    fsl-tbss \
-    fsl-randomise \
+# ── 2. Speed up conda with mamba ──────────────────────────────────────────────
+RUN conda install -y -n base -c conda-forge mamba \
     && conda clean -afy
 
-# Install MRtrix3 via conda
-RUN conda install -y -c mrtrix3 mrtrix3 \
+# ── 3. FSL — via the official FSL conda channel ───────────────────────────────
+# Installing only the tools the app actually calls (saves ~3 GB vs full FSL)
+RUN mamba install -y \
+        -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
+        -c conda-forge \
+        fsl-avwutils \
+        fsl-bet2 \
+        fsl-dtifit \
+        fsl-eddy \
+        fsl-fast \
+        fsl-flirt \
+        fsl-fnirt \
+        fsl-topup \
+        fsl-tbss \
+        fsl-randomise \
     && conda clean -afy
 
-# ── FSL environment variables ─────────────────────────────────────────────────
+# FSL environment
 ENV FSLDIR=/opt/conda
 ENV FSLOUTPUTTYPE=NIFTI_GZ
 ENV PATH="${FSLDIR}/bin:${PATH}"
 
-# ── Python packages ───────────────────────────────────────────────────────────
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir \
-    streamlit>=1.40 \
-    nibabel>=5.0 \
-    numpy>=1.24 \
-    scipy>=1.10 \
-    matplotlib>=3.7 \
-    pandas>=2.0 \
-    networkx>=3.0 \
-    dipy
+# ── 4. MRtrix3 — via the official mrtrix3 conda channel ──────────────────────
+RUN mamba install -y \
+        -c mrtrix3 \
+        -c conda-forge \
+        mrtrix3 \
+    && conda clean -afy
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# ── 5. Python packages ────────────────────────────────────────────────────────
+RUN pip install --no-cache-dir \
+        "streamlit>=1.40" \
+        "nibabel>=5.0" \
+        "numpy>=1.24,<2.0" \
+        "scipy>=1.10" \
+        "matplotlib>=3.7" \
+        "pandas>=2.0" \
+        "networkx>=3.0" \
+        "dipy>=1.7" \
+        "scikit-image>=0.20"
+
+# ── 6. Copy app ───────────────────────────────────────────────────────────────
 WORKDIR /app
 COPY . .
 
-# Pre-generate synthetic demo data so the app starts immediately
+# ── 7. Pre-generate synthetic demo data ───────────────────────────────────────
+# So the app starts immediately without any user setup
 RUN python scripts/make_test_data.py --subject 100307 --outdir data/hcp
 
-# HuggingFace Spaces requires port 7860
+# ── 8. Streamlit config ───────────────────────────────────────────────────────
+ENV STREAMLIT_SERVER_HEADLESS=true
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+
+# HuggingFace Spaces uses port 7860
+# For local testing: docker run -p 8501:7860 dmri-rosetta
 EXPOSE 7860
 
-CMD ["streamlit", "run", "app/app.py", \
-     "--server.port=7860", \
-     "--server.address=0.0.0.0", \
-     "--server.headless=true"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
+    CMD curl -f http://localhost:7860 || exit 1
+
+CMD ["streamlit", "run", "app/app.py", "--server.port=7860"]

@@ -1,0 +1,30 @@
+# Keep the build context small — exclude large/unnecessary files
+
+# Virtual environments
+.venv/
+.venv_clean/
+
+# Large data files (regenerated inside the container at build time)
+data/hcp/*/T1w/Diffusion/data.nii.gz
+data/hcp/*/preprocessed/
+data/hcp/*/dti/
+data/hcp/*/csd/
+data/hcp/*/tractography/
+data/hcp/*/connectome/
+data/hcp/*/qc/
+data/group/
+
+# Jupyter checkpoints and cache
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+__pycache__/
+**/__pycache__/
+
+# Build artifacts
+_build/
+
+# Git history (not needed in container)
+.git/
+
+# OS
+.DS_Store
