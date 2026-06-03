@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.venv_clean/
+
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Data — too large for git; download via scripts/download_hcp.py or make_test_data.py
+data/hcp/*/T1w/Diffusion/data.nii.gz
+data/hcp/*/T1w/Diffusion/nodif_brain_mask.nii.gz
+data/hcp/*/T1w/T1w_acpc_dc_restore_brain.nii.gz
+data/hcp/*/MNINonLinear/
+data/hcp/*/preprocessed/
+data/hcp/*/dti/
+data/hcp/*/csd/
+data/hcp/*/tractography/
+data/hcp/*/connectome/
+data/hcp/*/qc/
+data/group/
+
+# Keep gradient tables (tiny text files — useful for reproducibility)
+!data/hcp/*/T1w/Diffusion/bvals
+!data/hcp/*/T1w/Diffusion/bvecs
+
+# Jupyter Book build
+_build/
+
+# OS
+.DS_Store

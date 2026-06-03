@@ -33,6 +33,37 @@ def tool_badge(name: str) -> str:
     return f":{colour}[{symbol} `{name}`]"
 
 
+def short(path) -> str:
+    """Return a display-friendly path: relative to project root when possible."""
+    try:
+        return str(Path(path).relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def fmt_cmd(cmd: list) -> str:
+    """Format a command list for display, shortening absolute paths.
+    Handles both bare paths and --flag=/abs/path style tokens."""
+    parts = []
+    for token in cmd:
+        s = str(token)
+        # Handle --flag=value tokens
+        if "=" in s and s.startswith("-"):
+            flag, _, val = s.partition("=")
+            try:
+                rel = str(Path(val).relative_to(ROOT))
+                parts.append(f"{flag}={rel}")
+            except (ValueError, TypeError):
+                parts.append(s)
+        else:
+            try:
+                rel = str(Path(s).relative_to(ROOT))
+                parts.append(rel)
+            except (ValueError, TypeError):
+                parts.append(s)
+    return " ".join(parts)
+
+
 def show_slice(img_path: str | Path, title: str = "",
                cmap: str = "gray", vmin=None, vmax=None, axis: int = 2):
     """Return a matplotlib figure of the central slice."""
@@ -81,15 +112,7 @@ def sidebar():
         st.markdown("**Translating dMRI across FSL, MRtrix3, and DIPY**")
         st.divider()
 
-        # Tool availability
-        st.markdown("### Tool status")
-        for tool in ["bet", "eddy_openmp", "dtifit", "randomise",
-                     "dwidenoise", "dwi2fod", "tckgen", "tcksift2"]:
-            st.markdown(tool_badge(tool))
-
-        st.divider()
-
-        # Subject selector
+        # Subject selector — at the top so it's always visible
         st.markdown("### Dataset")
         subj = st.text_input("Subject ID", value="100307")
         st.session_state["subject"] = subj
@@ -117,6 +140,30 @@ def sidebar():
                     st.success("Done! Refresh the page.")
                 else:
                     st.error(r.stderr)
+
+        st.divider()
+
+        # Tool availability — in expander so navigation is always visible
+        with st.expander("🔧 Tool status"):
+            fsl_tools = ["bet", "eddy_openmp", "dtifit", "randomise", "topup"]
+            mrt_tools = ["dwidenoise", "mrdegibbs", "dwifslpreproc",
+                         "dwi2response", "dwi2fod", "tckgen", "tcksift2"]
+            col_f, col_m = st.columns(2)
+            with col_f:
+                st.caption("FSL")
+                for t in fsl_tools:
+                    st.markdown(tool_badge(t))
+            with col_m:
+                st.caption("MRtrix3")
+                for t in mrt_tools:
+                    st.markdown(tool_badge(t))
+            # DIPY
+            st.caption("DIPY")
+            try:
+                import dipy
+                st.markdown(f":green[✓ `dipy` {dipy.__version__}]")
+            except ImportError:
+                st.markdown(":red[✗ `dipy` — pip install dipy]")
 
         st.divider()
 
@@ -233,7 +280,7 @@ def page_brain_extraction():
                "-f", str(f_thresh), "-m"]
         if robust:
             cmd.append("-R")
-        st.code(" ".join(cmd), language="bash")
+        st.code(fmt_cmd(cmd), language="bash")
         st.caption("⚠️ Tip: If the mask looks over-stripped, lower `-f`. If skull leaks in, raise it.")
 
         if st.button("▶ Run FSL BET", key="run_bet"):
@@ -267,7 +314,7 @@ def page_brain_extraction():
             conv_cmd = ["mrconvert", str(dd / "data.nii.gz"), str(mif_path),
                         "-fslgrad", str(dd / "bvecs"), str(dd / "bvals"), "-force"]
             st.info("First, convert to MRtrix3 .mif format (embeds gradient table):")
-            st.code(" ".join(conv_cmd), language="bash")
+            st.code(fmt_cmd(conv_cmd), language="bash")
 
         cmd_mrt = ["dwi2mask", "legacy", str(mif_path), str(mrt_mask), "-force"]
         st.code(" ".join(cmd_mrt), language="bash")
@@ -401,7 +448,7 @@ def page_denoising():
 
         cmd = ["dwidenoise", str(mif_in), str(mif_out),
                "-noise", str(noise_m), "-force"]
-        st.code(" ".join(cmd), language="bash")
+        st.code(fmt_cmd(cmd), language="bash")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -505,7 +552,7 @@ def page_dti():
                "--wls",          # weighted least squares
                "--save_tensor",  # save full tensor
                ]
-        st.code(" ".join(cmd), language="bash")
+        st.code(fmt_cmd(cmd), language="bash")
         st.caption("Outputs: FA, MD, L1, L2, L3, V1, V2, V3, tensor, S0")
 
         if st.button("▶ Run FSL dtifit", key="run_dtifit"):
