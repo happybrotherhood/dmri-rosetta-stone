@@ -10,7 +10,7 @@
 # Open:   http://localhost:8501
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM brainlife/fsl:6.0.5.1
+FROM brainlife/fsl:6.0.7.22
 
 # FSL is already installed at /usr/local/fsl
 # FSLDIR, PATH, and FSLOUTPUTTYPE are already set in this image
