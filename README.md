@@ -163,6 +163,15 @@ If you use this tool in teaching or research, please cite:
 
 ---
 
+## Contributors
+
+| | Name | Role |
+|---|---|---|
+| 👩‍🔬 | **Busra Mutlu** — King's College London | Project design, neuroscience domain, all pipeline logic |
+| 🤖 | **Claude Sonnet** (Anthropic) | Code implementation, debugging, documentation |
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
