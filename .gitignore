@@ -29,5 +29,15 @@ data/group/
 # Jupyter Book build
 _build/
 
+# Build / CI logs
+build.log
+*.log
+
+# MRtrix intermediate files
+*.mif
+*.tck
+*.sift
+
 # OS
 .DS_Store
+Thumbs.db

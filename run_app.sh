@@ -1,5 +1,6 @@
 #!/bin/bash
-# Launch the dMRI Rosetta Stone Streamlit app using Python 3.10 env
-PYTHON=/Users/Busra/opt/anaconda3/envs/pythonProject/bin/python
+# Launch the dMRI Rosetta Stone Streamlit app locally.
+# Usage: bash run_app.sh
+set -e
 cd "$(dirname "$0")"
-$PYTHON -m streamlit run app/app.py --server.port 8501
+python3 -m streamlit run app/app.py --server.port 8501

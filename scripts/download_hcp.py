@@ -11,10 +11,15 @@ HCP data access: https://db.humanconnectome.org/
 """
 
 import argparse
-import boto3
-import os
 import sys
 from pathlib import Path
+
+try:
+    import boto3
+    from botocore.exceptions import NoCredentialsError, ClientError
+except ImportError:
+    print("ERROR: boto3 not installed. Run: pip install boto3", file=sys.stderr)
+    sys.exit(1)
 
 HCP_BUCKET = "hcp-openaccess"
 
@@ -46,6 +51,26 @@ def download_subject(subject: str, outdir: Path, dry_run: bool = False):
         if not dry_run:
             try:
                 s3.download_file(HCP_BUCKET, key, str(local_path))
+            except NoCredentialsError:
+                print(
+                    "    ERROR: AWS credentials not found.\n"
+                    "    Run: aws configure\n"
+                    "    Or set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY environment variables.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            except ClientError as e:
+                code = e.response["Error"]["Code"]
+                if code == "403":
+                    print(
+                        f"    ERROR: Access denied to s3://{HCP_BUCKET}/{key}\n"
+                        "    Check your HCP data use agreement at https://db.humanconnectome.org/",
+                        file=sys.stderr,
+                    )
+                elif code == "NoSuchKey":
+                    print(f"    ERROR: File not found on S3: {key}", file=sys.stderr)
+                else:
+                    print(f"    ERROR [{code}]: {e}", file=sys.stderr)
             except Exception as e:
                 print(f"    ERROR: {e}", file=sys.stderr)
 

@@ -1,7 +1,10 @@
 streamlit>=1.40
 nibabel>=5.0
-numpy>=1.24
+numpy>=1.24,<2.0
 scipy>=1.10
 matplotlib>=3.7
 pandas>=2.0
 networkx>=3.0
+dipy>=1.7
+scikit-image>=0.20
+boto3>=1.26
