@@ -32,7 +32,7 @@ The original Rosetta Stone (196 BCE) carried the same royal decree in three scri
 ### Option A — Docker (recommended, no installation required)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dmri-rosetta-stone.git
+git clone https://github.com/happybrotherhood/dmri-rosetta-stone.git
 cd dmri-rosetta-stone
 
 # Build — first time takes ~15 min (downloads FSL + MRtrix3)
@@ -49,7 +49,7 @@ Open **http://localhost:8501** in your browser.
 ### Option B — Local (requires FSL + MRtrix3 already installed)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dmri-rosetta-stone.git
+git clone https://github.com/happybrotherhood/dmri-rosetta-stone.git
 cd dmri-rosetta-stone
 
 pip install -r requirements.txt
@@ -157,7 +157,7 @@ If you use this tool in teaching or research, please cite:
   title  = {dMRI Rosetta Stone: A Comparative Tutorial for FSL, MRtrix3, and DIPY},
   author = {Mutlu, Busra},
   year   = {2026},
-  url    = {https://github.com/YOUR_USERNAME/dmri-rosetta-stone}
+  url    = {https://github.com/happybrotherhood/dmri-rosetta-stone}
 }
 ```
 
