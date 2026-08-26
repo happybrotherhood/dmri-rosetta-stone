@@ -44,3 +44,7 @@ build.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Submission build artefacts (regenerate with pandoc; see README)
+submission/
+figures/submission/
