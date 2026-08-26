@@ -54,7 +54,7 @@ Four principles guided development. First, **parallel transparency**: every pipe
 |---|---|
 | **Project name** | dMRI Rosetta Stone |
 | **Project home page** | https://github.com/happybrotherhood/dmri-rosetta-stone |
-| **Archived version** | Zenodo DOI (to be minted on acceptance) |
+| **Archived version** | v1.0.0, Zenodo, doi:10.5281/zenodo.22106455 (all versions: doi:10.5281/zenodo.22106454) |
 | **Operating system** | Platform independent — Linux, macOS, and Windows, via Docker |
 | **Programming language** | Python ≥ 3.9 |
 | **Other requirements** | Docker ≥ 20.10. For local installation without Docker: FSL ≥ 6.0 and MRtrix3 ≥ 3.0.4 |
@@ -287,7 +287,7 @@ dMRI Rosetta Stone is an open-source, containerised, interactive platform that e
 
 ## Data Availability Statement
 
-The complete source code, Dockerfile, and documentation are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under an MIT licence. The Stanford HARDI demonstration dataset is freely available through the DIPY project at https://dipy.org and is downloaded automatically by the application. No registration or credentials are required to reproduce all results presented here.
+The complete source code, Dockerfile, and documentation are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under an MIT licence. The exact version reported here is archived on Zenodo as v1.0.0, doi:10.5281/zenodo.22106455; the concept DOI doi:10.5281/zenodo.22106454 always resolves to the most recent version. Both demonstration datasets — Stanford HARDI and Sherbrooke 3-shell — are distributed openly by the DIPY project at https://dipy.org and are retrieved automatically by `scripts/fetch_sample_data.py`. No registration or credentials are required to reproduce any result presented here, and the four commands that regenerate every reported value are given at the end of the Materials and Methods.
 
 ---
 
