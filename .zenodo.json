@@ -1,0 +1,23 @@
+{
+  "title": "dMRI Rosetta Stone: An Open-Source Interactive Platform for Cross-Tool Diffusion MRI Education and Reproducibility",
+  "description": "<p>An open-source, containerised platform that presents the same diffusion MRI operation in FSL, MRtrix3 and DIPY side by side, executable on real open human brain data. Covers seven canonical pipeline stages from brain extraction through tractography and voxelwise group analysis.</p><p>Ships with a reproducible benchmark of inter-tool agreement across two independent open datasets (Stanford HARDI and Sherbrooke 3-shell), driving all three toolkits from identical input volumes, gradient tables and one shared brain mask so that the comparison isolates the tensor-fitting stage.</p><p>Licensed MIT. Note that the bundled FSL carries its own licence restricting commercial use.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Mutlu, Busra",
+      "affiliation": "King's College London"
+    }
+  ],
+  "keywords": [
+    "diffusion MRI",
+    "FSL",
+    "MRtrix3",
+    "DIPY",
+    "educational software",
+    "neuroinformatics",
+    "reproducibility",
+    "open science"
+  ],
+  "access_right": "open"
+}

@@ -544,7 +544,46 @@ def page_denoising():
             else:
                 with st.spinner("Denoising..."):
                     ok, out = run_cmd(cmd, "dwidenoise")
-                st.success("Done!") if ok else st.error(out)
+                if ok:
+                    st.success("Done!")
+                    # .mif isn't readable by the slice viewer — convert outputs to NIfTI
+                    den_nii   = pd_ / "dwi_denoised.nii.gz"
+                    noise_nii = pd_ / "noise_map.nii.gz"
+                    subprocess.run(["mrconvert", str(mif_out), str(den_nii), "-force"],
+                                   capture_output=True)
+                    subprocess.run(["mrconvert", str(noise_m), str(noise_nii), "-force"],
+                                   capture_output=True)
+
+                    # Compare the b=0 image before vs after (mean over b0 volumes)
+                    bvals = np.loadtxt(str(dd / "bvals"))
+                    b0sel = bvals < 50
+                    raw   = nib.load(str(dd / "data.nii.gz")).get_fdata()[..., b0sel].mean(-1)
+                    den   = nib.load(str(den_nii)).get_fdata()[..., b0sel].mean(-1)
+                    resid = raw - den
+                    noise = nib.load(str(noise_nii)).get_fdata()
+                    if noise.ndim == 4:
+                        noise = noise[..., 0]
+                    z    = raw.shape[2] // 2
+                    vmax = float(np.percentile(raw, 99))
+                    rlim = float(np.percentile(np.abs(resid), 99)) or 1.0
+
+                    fig, axes = plt.subplots(1, 4, figsize=(14, 4))
+                    panels = [
+                        (raw[:, :, z],   "Raw b0",                "gray",  dict(vmin=0, vmax=vmax)),
+                        (den[:, :, z],   "Denoised b0",           "gray",  dict(vmin=0, vmax=vmax)),
+                        (resid[:, :, z], "Residual (raw − denoised)", "RdBu_r", dict(vmin=-rlim, vmax=rlim)),
+                        (noise[:, :, z], "Noise map σ",           "hot",   dict()),
+                    ]
+                    for ax, im, ttl, cm, kw in panels:
+                        ax.imshow(im.T, cmap=cm, origin="lower", **kw)
+                        ax.set_title(ttl, fontsize=10)
+                        ax.axis("off")
+                    fig.tight_layout(pad=0.3)
+                    st.pyplot(fig); plt.close(fig)
+                    st.caption("✅ Residual should look like featureless noise — visible anatomy means real "
+                               "signal was removed. The noise map σ should be spatially smooth.")
+                else:
+                    st.error(out)
 
     with tab_dipy:
         st.code("""from dipy.denoise.localpca import mppca
@@ -567,13 +606,32 @@ denoised, sigma = mppca(data, patch_radius=1, return_sigma=True)
                 nib.save(nib.Nifti1Image(sigma.astype(np.float32), img.affine), str(sigma_path))
                 st.success(f"Done! Mean σ = {sigma.mean():.2f}")
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    fig = show_slice(str(out_path), "Denoised (DIPY)", cmap="gray")
-                    st.pyplot(fig); plt.close(fig)
-                with col2:
-                    fig = show_slice(str(sigma_path), "Noise map σ", cmap="hot")
-                    st.pyplot(fig); plt.close(fig)
+                # Before vs after on the b=0 image, plus residual and noise map
+                bvals = np.loadtxt(str(dd / "bvals"))
+                b0sel = bvals < 50
+                raw   = data[..., b0sel].mean(-1)
+                den   = denoised[..., b0sel].mean(-1)
+                resid = raw - den
+                noise = sigma if sigma.ndim == 3 else sigma[..., 0]
+                z     = raw.shape[2] // 2
+                vmax  = float(np.percentile(raw, 99))
+                rlim  = float(np.percentile(np.abs(resid), 99)) or 1.0
+
+                fig, axes = plt.subplots(1, 4, figsize=(14, 4))
+                panels = [
+                    (raw[:, :, z],   "Raw b0",                "gray",  dict(vmin=0, vmax=vmax)),
+                    (den[:, :, z],   "Denoised b0",           "gray",  dict(vmin=0, vmax=vmax)),
+                    (resid[:, :, z], "Residual (raw − denoised)", "RdBu_r", dict(vmin=-rlim, vmax=rlim)),
+                    (noise[:, :, z], "Noise map σ",           "hot",   dict()),
+                ]
+                for ax, im, ttl, cm, kw in panels:
+                    ax.imshow(im.T, cmap=cm, origin="lower", **kw)
+                    ax.set_title(ttl, fontsize=10)
+                    ax.axis("off")
+                fig.tight_layout(pad=0.3)
+                st.pyplot(fig); plt.close(fig)
+                st.caption("✅ Residual should look like featureless noise — visible anatomy means real "
+                           "signal was removed. The noise map σ should be spatially smooth.")
             except ImportError:
                 st.error("DIPY not importable")
             except Exception as e:

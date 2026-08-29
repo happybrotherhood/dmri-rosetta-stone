@@ -70,6 +70,28 @@ The app uses the **Stanford HARDI dataset** — a real, open-access human brain 
 python scripts/fetch_sample_data.py --subject stanford --outdir data/hcp
 ```
 
+A second open dataset, **Sherbrooke 3-shell** (b = 1000/2000/3500), is also supported and is used as an independent replication in the inter-tool benchmark:
+
+```bash
+python scripts/fetch_sample_data.py --subject sherbrooke --outdir data/hcp
+```
+
+### Reproducing the paper's benchmark
+
+```bash
+# Stanford is single-shell, so no --shell needed
+python scripts/generate_fa_maps.py     --subject stanford
+python scripts/compute_fa_comparison.py --subject stanford
+
+# Sherbrooke is multi-shell: pick one shell so all three tools fit identical data
+python scripts/generate_fa_maps.py     --subject sherbrooke --shell 1000
+python scripts/compute_fa_comparison.py --subject sherbrooke
+```
+
+Each run writes `table3_<subject>.md`, `fa_comparison_stats_<subject>.txt`, and
+`figures/fig{3,4}_*_<subject>.{png,pdf}`. FSL is required for the FSL rows — run
+inside the Docker image if it is not installed locally.
+
 For real HCP data (requires an HCP account and AWS credentials):
 
 ```bash

@@ -1,0 +1,6 @@
+
+# LaTeX build intermediates (manuscript.tex and figures are tracked)
+latex/*.aux
+latex/*.log
+latex/*.out
+latex/*.xdv
