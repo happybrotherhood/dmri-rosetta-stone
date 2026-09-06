@@ -46,16 +46,27 @@ FIGURES = [
 
 PREAMBLE = r"""\documentclass[12pt,a4paper]{article}
 
-% TeX Gyre Termes is metrically identical to Times New Roman. Load it by file
-% rather than by name: tectonic ships the font files but does not expose them
-% to fontspec's system-font lookup.
-\usepackage{fontspec}
-\setmainfont{texgyretermes}[
-  Extension      = .otf,
-  UprightFont    = *-regular,
-  BoldFont       = *-bold,
-  ItalicFont     = *-italic,
-  BoldItalicFont = *-bolditalic ]
+% Compiles under pdfLaTeX, XeLaTeX and LuaLaTeX alike. fontspec works only on
+% the latter two, so pdfLaTeX (the default in Overleaf and in most editors)
+% gets an equivalent Times setup instead of an immediate fatal error.
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{newtxtext}          % Times clone for pdfLaTeX
+  \usepackage{newtxmath}
+\else
+  % TeX Gyre Termes is metrically identical to Times New Roman. Load it by
+  % file rather than by name: tectonic ships the font files but does not
+  % expose them to fontspec's system-font lookup.
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[
+    Extension      = .otf,
+    UprightFont    = *-regular,
+    BoldFont       = *-bold,
+    ItalicFont     = *-italic,
+    BoldItalicFont = *-bolditalic ]
+\fi
 \usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -193,6 +204,8 @@ UNICODE_FIXES = [
     ("ρ", r"$\rho$"),
     ("σ", r"$\sigma$"),
     ("µ", r"\textmu{}"),
+    ("–", "--"),          # en dash; the only non-ASCII left after the rest
+    ("—", "---"),         # em dash
 ]
 
 
