@@ -43,6 +43,13 @@ from scipy.stats import pearsonr, spearmanr
 ROOT = Path(__file__).parent.parent
 
 TOOLS = ["FSL", "MRtrix3", "DIPY"]
+
+# Name the acquisition in figure titles the way the paper does, rather than by
+# the lower-case directory key used on disk.
+DATASET_TITLES = {
+    "stanford": "Stanford HARDI",
+    "sherbrooke": "Sherbrooke 3-shell",
+}
 COLORS = {"FSL": "#2166AC", "MRtrix3": "#1A9850", "DIPY": "#D6604D"}
 
 # Metric maps written by generate_fa_maps.py, per tool.
@@ -246,7 +253,7 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
         ax_ba = fig.add_subplot(gs[2, col])
         bland_altman(ax_ba, a, b, ta, tb, unit="FA")
 
-    fig.suptitle(f"FA agreement across FSL / MRtrix3 / DIPY - {subj}",
+    fig.suptitle(f"FA agreement across FSL / MRtrix3 / DIPY - {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=1.01)
     for ext in ("png", "pdf"):
         out = fig_dir / f"fig3_fa_comparison_{subj}.{ext}"
@@ -273,7 +280,7 @@ def make_figure4(masks, b0, z_idx, fig_dir, subj):
                      fontsize=11, color=COLORS[tool], fontweight="bold")
         ax.axis("off")
 
-    fig.suptitle(f"Brain extraction comparison - {subj}",
+    fig.suptitle(f"Brain extraction comparison - {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold")
     fig.tight_layout()
     for ext in ("png", "pdf"):
