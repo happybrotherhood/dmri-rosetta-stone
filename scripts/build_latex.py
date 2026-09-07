@@ -31,7 +31,7 @@ OUT_TEX = OUT_DIR / "manuscript.tex"
 # anchored before. Widths are chosen so that tall figures still fit one page.
 FIGURES = [
     dict(key="Figure1", file="figures/Figure1.pdf", width=1.0,
-         anchor="### Data",
+         anchor="### Quantitative Inter-Tool Agreement Analysis",
          caption=None),
     dict(key="Figure4", file="figures/Figure4.pdf", width=1.0,
          anchor="### Inter-Tool DTI Metric Agreement",
