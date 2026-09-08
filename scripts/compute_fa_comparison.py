@@ -281,8 +281,11 @@ def make_figure4(masks, b0, z_idx, fig_dir, subj):
         ax.axis("off")
 
     fig.suptitle(f"Brain extraction comparison - {DATASET_TITLES.get(subj, subj)}",
-                 fontsize=13, fontweight="bold")
-    fig.tight_layout()
+                 fontsize=13, fontweight="bold", y=0.97)
+    # Reserve the top strip for the suptitle. Without the rect, tight_layout
+    # packs the panels up against it and the per-panel titles collide with it
+    # on the wider Sherbrooke images.
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     for ext in ("png", "pdf"):
         out = fig_dir / f"fig4_brain_masks_{subj}.{ext}"
         fig.savefig(str(out), dpi=300 if ext == "png" else None, bbox_inches="tight")
