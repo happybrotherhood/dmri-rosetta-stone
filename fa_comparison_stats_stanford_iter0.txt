@@ -1,0 +1,92 @@
+dMRI Rosetta Stone - Inter-tool agreement statistics
+==============================================================
+Subject: stanford
+Tools with tensor fits: FSL, MRtrix3, DIPY
+Tools with brain masks: FSL, MRtrix3, DIPY
+White-matter definition: FA > 0.2 in all available tools
+White-matter voxels: 65,009
+Axial slice shown in figures: z index 38
+
+1. BRAIN MASK AGREEMENT (Dice similarity coefficient)
+--------------------------------------------------------------
+  FSL vs MRtrix3: DSC = 0.9024
+  FSL vs DIPY: DSC = 0.9277
+  MRtrix3 vs DIPY: DSC = 0.9009
+
+  Mask sizes (voxels):
+    FSL: 203,984
+    MRtrix3: 167,950
+    DIPY: 187,948
+
+2. DTI SCALAR AGREEMENT (white-matter voxels)
+--------------------------------------------------------------
+
+  FSL vs MRtrix3
+    FA (n = 64,747 voxels)
+        Pearson  r   = 1.0000 (p = < 1e-300)
+        Spearman rho = 1.0000
+        MAE          = 0.0000
+        bias         = +0.0000  95% LoA [-0.0018, +0.0018]
+        excluded     = 262 non-physical voxels of 65,009
+    MD (n = 64,747 voxels)
+        Pearson  r   = 1.0000 (p = < 1e-300)
+        Spearman rho = 1.0000
+        MAE          = 0.0000 um^2/ms
+        bias         = +0.0000 um^2/ms  95% LoA [-0.0017, +0.0017]
+        excluded     = 262 non-physical voxels of 65,009
+
+  FSL vs DIPY
+    FA (n = 64,747 voxels)
+        Pearson  r   = 0.9601 (p = < 1e-300)
+        Spearman rho = 0.9701
+        MAE          = 0.0228
+        bias         = -0.0158  95% LoA [-0.0995, +0.0679]
+        excluded     = 262 non-physical voxels of 65,009
+    MD (n = 64,725 voxels)
+        Pearson  r   = 0.9367 (p = < 1e-300)
+        Spearman rho = 0.9579
+        MAE          = 0.0325 um^2/ms
+        bias         = -0.0322 um^2/ms  95% LoA [-0.1299, +0.0655]
+        excluded     = 284 non-physical voxels of 65,009
+
+  MRtrix3 vs DIPY
+    FA (n = 64,747 voxels)
+        Pearson  r   = 0.9602 (p = < 1e-300)
+        Spearman rho = 0.9702
+        MAE          = 0.0228
+        bias         = -0.0158  95% LoA [-0.0995, +0.0678]
+        excluded     = 262 non-physical voxels of 65,009
+    MD (n = 64,725 voxels)
+        Pearson  r   = 0.9366 (p = < 1e-300)
+        Spearman rho = 0.9579
+        MAE          = 0.0325 um^2/ms
+        bias         = -0.0322 um^2/ms  95% LoA [-0.1300, +0.0656]
+        excluded     = 284 non-physical voxels of 65,009
+
+2b. NON-PHYSICAL VOXELS PER TOOL (inside white-matter mask)
+--------------------------------------------------------------
+  Admissible: FA in [0, 1.0]; 0 < MD <= 3.0e-03 mm^2/s
+  (free-water diffusivity at body temperature).
+  Unconstrained linear tensor fitting can yield negative eigenvalues,
+  which push FA above 1 and MD below 0. Such voxels are excluded from
+  the statistics above, and the counts themselves are a genuine
+  inter-tool difference.
+
+    FSL: FA > 1 = 262, FA < 0 = 0, MD <= 0 = 262, MD > bound = 0
+    MRtrix3: FA > 1 = 262, FA < 0 = 0, MD <= 0 = 262, MD > bound = 0
+    DIPY: FA > 1 = 0, FA < 0 = 0, MD <= 0 = 0, MD > bound = 22
+
+3. MEAN METRIC VALUES PER TOOL (white-matter voxels)
+--------------------------------------------------------------
+  Computed over that tool's own physically admissible voxels, so the
+  summary statistics are not distorted by failed tensor fits.
+
+  FSL:
+    FA = 0.4000 +/- 0.1479 (n = 64,747)
+    MD = 0.6034 +/- 0.1296 um^2/ms (n = 64,747)
+  MRtrix3:
+    FA = 0.4000 +/- 0.1479 (n = 64,747)
+    MD = 0.6034 +/- 0.1296 um^2/ms (n = 64,747)
+  DIPY:
+    FA = 0.4168 +/- 0.1537 (n = 65,009)
+    MD = 0.6334 +/- 0.1460 um^2/ms (n = 64,987)

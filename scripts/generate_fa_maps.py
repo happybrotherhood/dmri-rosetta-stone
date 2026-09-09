@@ -42,6 +42,7 @@ import numpy as np
 import nibabel as nib
 
 ROOT = Path(__file__).parent.parent
+MRTRIX_ITER = None   # set from --mrtrix-iter
 
 
 def data_dir(subject: str) -> Path:
@@ -60,7 +61,33 @@ def best_shell_sel(bvals: np.ndarray, preferred: int = 1000):
     return sel, target
 
 
-def prepare_input(dd: Path, dti: Path, shell: int | None) -> dict:
+def denoise_series(dd: Path, dti: Path) -> Path:
+    """MP-PCA denoise the full DWI series once, for all three toolkits.
+
+    Run before shell selection, since MP-PCA estimates the noise level from
+    the redundancy across volumes and benefits from having all of them.
+
+    One denoiser is applied to the input every toolkit then receives, so
+    denoising is held constant and only the tensor fit varies. Giving each
+    toolkit its own denoiser would not be the more faithful alternative: FSL
+    has none, so it would fit noisier data than the other two and the
+    difference could no longer be attributed to the fit.
+    """
+    out = dti / "denoised_full.nii.gz"
+    if out.exists():
+        print(f"Denoised series already present: {out.name}")
+        return out
+    if not shutil.which("dwidenoise"):
+        sys.exit("dwidenoise not on PATH; run inside the project container.")
+    print("Denoising the full series with MRtrix3 dwidenoise ...")
+    if not run(["dwidenoise", str(dd / "data.nii.gz"), str(out),
+                "-noise", str(dti / "noise_map.nii.gz"), "-force"], "dwidenoise"):
+        sys.exit("dwidenoise failed")
+    return out
+
+
+def prepare_input(dd: Path, dti: Path, shell: int | None,
+                  source: Path | None = None) -> dict:
     """Resolve the exact data/bvals/bvecs every toolkit will be given.
 
     The single-tensor model assumes monoexponential signal decay, which does
@@ -74,6 +101,7 @@ def prepare_input(dd: Path, dti: Path, shell: int | None) -> dict:
     the identical subset to all three tools, so the comparison isolates the
     fitting stage. For single-shell data no subsetting is needed.
     """
+    data_path = source if source is not None else dd / "data.nii.gz"
     bvals = np.loadtxt(str(dd / "bvals"))
     shells = sorted(int(s) for s in np.unique(np.round(bvals, -2)) if s > 100)
 
@@ -83,7 +111,7 @@ def prepare_input(dd: Path, dti: Path, shell: int | None) -> dict:
                   f"given.\n         All volumes will be fitted, which violates "
                   f"the single-tensor\n         model and confounds this "
                   f"comparison. Pass --shell <b-value>.")
-        return {"data": dd / "data.nii.gz", "bvals": dd / "bvals",
+        return {"data": data_path, "bvals": dd / "bvals",
                 "bvecs": dd / "bvecs", "label": f"all {bvals.size} volumes"}
 
     if shell not in shells:
@@ -94,7 +122,7 @@ def prepare_input(dd: Path, dti: Path, shell: int | None) -> dict:
     print(f"Extracting shared single-shell subset: b=0 + b={shell} "
           f"({n} of {bvals.size} volumes)")
 
-    img = nib.load(str(dd / "data.nii.gz"))
+    img = nib.load(str(data_path))
     sub = img.get_fdata(dtype=np.float32)[..., sel]
     bvecs = np.loadtxt(str(dd / "bvecs"))
     if bvecs.shape[0] != 3:
@@ -196,8 +224,14 @@ def gen_mrtrix(inp: dict, dti: Path, mask: Path) -> bool:
                "mrconvert"):
         return False
     tensor = dti / "mrt_tensor.mif"
-    if not run(["dwi2tensor", str(mif), str(tensor), "-mask", str(mask), "-force"],
-               "dwi2tensor"):
+    cmd = ["dwi2tensor", str(mif), str(tensor), "-mask", str(mask), "-force"]
+    if MRTRIX_ITER is not None:
+        # dwi2tensor defaults to WLS followed by two IWLS reweightings, which
+        # is a different estimator from the plain WLS used for FSL and DIPY.
+        # -iter 0 stops after the first WLS step, putting all three on the
+        # same algorithm.
+        cmd += ["-iter", str(MRTRIX_ITER)]
+    if not run(cmd, "dwi2tensor"):
         return False
     return run(["tensor2metric", str(tensor),
                 "-fa", str(dti / "mrt_FA.nii.gz"),
@@ -247,14 +281,27 @@ def gen_fsl(inp: dict, dti: Path, mask: Path) -> bool:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--subject", default="stanford")
+    ap.add_argument("--mrtrix-iter", type=int, default=None,
+                    help="iterations of IWLS reweighting for MRtrix3 dwi2tensor. "
+                         "Pass 0 for plain WLS, matching FSL --wls and DIPY WLS. "
+                         "Default leaves MRtrix3 at its own default of 2.")
+    ap.add_argument("--denoise", action="store_true",
+                    help="MP-PCA denoise the series once and give the denoised "
+                         "data to all three toolkits. Writes to dti_denoised/ "
+                         "so the unprocessed results are preserved.")
     ap.add_argument("--shell", type=int, default=None,
                     help="b-value of the single non-zero shell to fit. Required "
                          "for multi-shell data so that all three toolkits "
                          "receive identical input.")
     args = ap.parse_args()
+    global MRTRIX_ITER
+    MRTRIX_ITER = args.mrtrix_iter
 
     dd = data_dir(args.subject)
-    dti = ROOT / "data" / "hcp" / args.subject / "dti"
+    sub_dir = "dti_denoised" if args.denoise else "dti"
+    if args.mrtrix_iter is not None:
+        sub_dir += f"_iter{args.mrtrix_iter}"
+    dti = ROOT / "data" / "hcp" / args.subject / sub_dir
     dti.mkdir(parents=True, exist_ok=True)
 
     if not (dd / "data.nii.gz").exists():
@@ -293,7 +340,8 @@ def main():
     # ── Tensor fits: ONE shared mask AND one shared volume subset, so the
     #    comparison isolates the fitting stage from masking and shell choice.
     print("\n--- DTI fitting (shared mask, shared volumes) ---")
-    inp = prepare_input(dd, dti, args.shell)
+    source = denoise_series(dd, dti) if args.denoise else None
+    inp = prepare_input(dd, dti, args.shell, source)
     print(f"Fitting input: {inp['label']}\n")
     results = {
         "FSL": gen_fsl(inp, dti, mask),

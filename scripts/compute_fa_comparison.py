@@ -42,6 +42,7 @@ from scipy.stats import pearsonr, spearmanr
 
 ROOT = Path(__file__).parent.parent
 
+TAG = ""
 TOOLS = ["FSL", "MRtrix3", "DIPY"]
 
 # Name the acquisition in figure titles the way the paper does, rather than by
@@ -94,6 +95,11 @@ def parse_args():
     p.add_argument("--subject", default="stanford")
     p.add_argument("--fa-threshold", type=float, default=WM_FA_THRESHOLD,
                    help="FA threshold defining the white-matter mask")
+    p.add_argument("--mrtrix-iter", type=int, default=None,
+                   help="read the run produced with this MRtrix3 -iter setting")
+    p.add_argument("--denoise", action="store_true",
+                   help="read the denoised run from dti_denoised/ and label "
+                        "its outputs accordingly")
     p.add_argument("--md-max", type=float, default=MD_MAX_MM2_S,
                    help="upper bound (mm^2/s) for a physiologically plausible MD; "
                         "voxels outside (0, md-max] are excluded from MD statistics")
@@ -256,7 +262,7 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
     fig.suptitle(f"FA agreement across FSL / MRtrix3 / DIPY - {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=1.01)
     for ext in ("png", "pdf"):
-        out = fig_dir / f"fig3_fa_comparison_{subj}.{ext}"
+        out = fig_dir / f"fig3_fa_comparison_{subj}{TAG}.{ext}"
         fig.savefig(str(out), dpi=300 if ext == "png" else None, bbox_inches="tight")
         print(f"  {out}")
     plt.close(fig)
@@ -287,7 +293,7 @@ def make_figure4(masks, b0, z_idx, fig_dir, subj):
     # on the wider Sherbrooke images.
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     for ext in ("png", "pdf"):
-        out = fig_dir / f"fig4_brain_masks_{subj}.{ext}"
+        out = fig_dir / f"fig4_brain_masks_{subj}{TAG}.{ext}"
         fig.savefig(str(out), dpi=300 if ext == "png" else None, bbox_inches="tight")
         print(f"  {out}")
     plt.close(fig)
@@ -431,9 +437,16 @@ def write_table3(path, metrics, dices, pairs):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    global TAG
     args = parse_args()
+    TAG = "_denoised" if args.denoise else ""
     subj = args.subject
-    dti_dir = ROOT / "data" / "hcp" / subj / "dti"
+    tag = "_denoised" if args.denoise else ""
+    sub_dir = "dti_denoised" if args.denoise else "dti"
+    if args.mrtrix_iter is not None:
+        sub_dir += f"_iter{args.mrtrix_iter}"
+        tag += f"_iter{args.mrtrix_iter}"
+    dti_dir = ROOT / "data" / "hcp" / subj / sub_dir
     fig_dir = ROOT / "figures"
     fig_dir.mkdir(exist_ok=True)
 
@@ -537,10 +550,10 @@ def main():
     # Outputs are per-subject so that running a second dataset does not
     # silently overwrite the first one's figures and tables.
     print("\nWriting reports:")
-    write_stats(ROOT / f"fa_comparison_stats_{subj}.txt", subj, wm_mask,
+    write_stats(ROOT / f"fa_comparison_stats_{subj}{tag}.txt", subj, wm_mask,
                 args.fa_threshold, args.md_max, metrics, masks, dices, pairs,
                 excl, z_idx)
-    write_table3(ROOT / f"table3_{subj}.md", metrics, dices, pairs)
+    write_table3(ROOT / f"table3_{subj}{tag}.md", metrics, dices, pairs)
 
     missing = [t for t in TOOLS if t not in metrics]
     if missing:

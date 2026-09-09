@@ -1,0 +1,19 @@
+Accuracy against a known ground truth (synthetic phantom)
+========================================================================
+Estimators matched: FSL --wls, MRtrix3 -iter 0 and DIPY WLS are the
+same algorithm. MRtrix3's default is listed separately.
+Crossing-fibre region excluded: no single tensor is correct there.
+
+ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms
+  arm                         FA mean   FA bias  FA RMSE   MD mean   MD bias  MD RMSE
+  FSL dtifit --wls             0.0858   +0.0858   0.0900    0.8909   -0.0091   0.0248
+  MRtrix3 -iter 0 (WLS)        0.0858   +0.0858   0.0900    0.8909   -0.0091   0.0248
+  DIPY WLS                     0.0862   +0.0862   0.0905    0.9046   +0.0046   0.0238
+  MRtrix3 default (IWLS)       0.0865   +0.0865   0.0908    0.9046   +0.0046   0.0238
+
+SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms
+  arm                         FA mean   FA bias  FA RMSE   MD mean   MD bias  MD RMSE
+  FSL dtifit --wls             0.7050   -0.0021   0.0212    0.6950   -0.0050   0.0180
+  MRtrix3 -iter 0 (WLS)        0.7050   -0.0021   0.0212    0.6950   -0.0050   0.0180
+  DIPY WLS                     0.7085   +0.0014   0.0209    0.7017   +0.0017   0.0174
+  MRtrix3 default (IWLS)       0.7093   +0.0022   0.0209    0.7020   +0.0020   0.0175
