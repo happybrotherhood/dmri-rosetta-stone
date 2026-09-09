@@ -44,6 +44,7 @@ import nibabel as nib
 ROOT = Path(__file__).parent.parent
 MRTRIX_ITER = None   # set from --mrtrix-iter
 FSL_WLS = True       # cleared by --fsl-ols
+DIPY_METHOD = "WLS"  # set from --dipy-method
 
 
 def data_dir(subject: str) -> Path:
@@ -257,7 +258,13 @@ def gen_dipy(inp: dict, dti: Path, mask: Path) -> bool:
     data = img.get_fdata()
     msk = nib.load(str(mask)).get_fdata().astype(bool)
     gtab = gradient_table(bv, bvc)
-    fit = TensorModel(gtab, fit_method="WLS").fit(data, mask=msk)
+    print(f"  fit method: {DIPY_METHOD}")
+    kw = {}
+    if DIPY_METHOD == "IRLS":
+        # DIPY's IRLS needs the estimator for its initial pass; WLS makes it
+        # the direct analogue of MRtrix3's default.
+        kw["fit_type"] = "WLS"
+    fit = TensorModel(gtab, fit_method=DIPY_METHOD, **kw).fit(data, mask=msk)
     FA = fractional_anisotropy(fit.evals).astype(np.float32)
     MD = mean_diffusivity(fit.evals).astype(np.float32)
     nib.save(nib.Nifti1Image(np.nan_to_num(FA), img.affine), str(dti / "dipy_FA.nii.gz"))
@@ -288,6 +295,12 @@ def gen_fsl(inp: dict, dti: Path, mask: Path) -> bool:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--subject", default="stanford")
+    ap.add_argument("--dipy-method", default="WLS",
+                    choices=["WLS", "OLS", "NLLS", "IRLS", "RESTORE"],
+                    help="DIPY fit_method. IRLS is the iteratively reweighted "
+                         "scheme MRtrix3 applies by default; NLLS fits the "
+                         "signal rather than its logarithm; RESTORE "
+                         "downweights outliers.")
     ap.add_argument("--fsl-ols", action="store_true",
                     help="run FSL dtifit at its default (ordinary least "
                          "squares) instead of --wls")
@@ -304,9 +317,10 @@ def main():
                          "for multi-shell data so that all three toolkits "
                          "receive identical input.")
     args = ap.parse_args()
-    global MRTRIX_ITER, FSL_WLS
+    global MRTRIX_ITER, FSL_WLS, DIPY_METHOD
     MRTRIX_ITER = args.mrtrix_iter
     FSL_WLS = not args.fsl_ols
+    DIPY_METHOD = args.dipy_method
 
     dd = data_dir(args.subject)
     sub_dir = "dti_denoised" if args.denoise else "dti"
@@ -314,6 +328,8 @@ def main():
         sub_dir += f"_iter{args.mrtrix_iter}"
     if args.fsl_ols:
         sub_dir += "_fslols"
+    if args.dipy_method != "WLS":
+        sub_dir += f"_dipy{args.dipy_method}"
     dti = ROOT / "data" / "hcp" / args.subject / sub_dir
     dti.mkdir(parents=True, exist_ok=True)
 
