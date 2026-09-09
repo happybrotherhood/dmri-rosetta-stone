@@ -1,0 +1,12 @@
+Does the weighting scheme explain the difference?  (sherbrooke)
+====================================================================
+White matter voxels compared: 105,311
+
+Each DIPY variant against the FSL --wls fit of the same data:
+  DIPY weights                           FA r    FA MAE   FA bias
+  predicted signal (DIPY default)      0.9173    0.0468   -0.0201
+  empirical signal (as FSL/MRtrix3)    0.9949    0.0035   -0.0023
+
+  DIPY weights                           MD r    MD MAE   MD bias
+  predicted signal (DIPY default)      0.9136    0.1224   +0.1224
+  empirical signal (as FSL/MRtrix3)    0.9962    0.0022   +0.0022

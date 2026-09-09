@@ -1,4 +1,4 @@
-# What actually differs between diffusion MRI toolkits: the estimator, not the software
+# Do FSL, MRtrix3 and DIPY agree? A controlled benchmark of diffusion tensor metrics across two open datasets
 
 **Busra Mutlu**¹\*
 
@@ -8,17 +8,17 @@
 
 ## Abstract
 
-**Background.** Differences between diffusion MRI toolkits are commonly attributed to the software. Which component is responsible is rarely established.
+**Background.** Diffusion MRI is analysed with three packages — FSL, MRtrix3 and DIPY — assumed to produce interchangeable tensor metrics. The assumption is rarely tested under controlled conditions.
 
-**New method.** We compared tensor fits from FSL, MRtrix3 and DIPY on two open datasets, holding every input constant: the same volumes and gradient tables, one brain mask, one single-shell subset, no preprocessing. We then varied the estimator rather than the toolkit, validating each arm against a phantom with known eigenvalues.
+**New method.** We benchmark the three on two independent open datasets, Stanford HARDI and Sherbrooke 3-shell, holding everything constant except the toolkit: the same volumes and gradient tables, one shared brain mask, one single-shell subset, and no preprocessing. Statistics use only physically admissible voxels. All three run in one container, so further datasets can be added in two commands.
 
-**Results.** At each toolkit's default the three appeared to disagree, FSL diverging from the other two. This was an artefact of unmatched estimators: MRtrix3 defaults to two iterations of reweighted least squares, not the plain weighted least squares used elsewhere. Matched to plain WLS, FSL and MRtrix3 agree exactly (r = 1.0000, MAE 0.0000). DIPY differs because it takes its weights from the signal predicted by an initial OLS fit rather than the measured signal; supplying measured-signal weights cuts its disagreement with FSL from 0.0222 to 0.0003 FA units on one dataset, 0.0468 to 0.0035 on the other. Against ground truth every arm recovers FA to within 0.002, so neither weighting is wrong.
+**Results.** Agreement was asymmetric on both acquisitions. MRtrix3 and DIPY were near-identical in white matter (fractional anisotropy r = 0.9990 and 0.9966; mean diffusivity r = 0.9965 and 0.9991), whereas FSL diverged from both. The FSL discrepancy was not a fixed bias: mean diffusivity was lower by 5% on one dataset and 19% on the other, and the anisotropy offset reversed sign. Non-physical tensor fits reached 4.0% of white matter voxels in FSL and 2.0% in MRtrix3, but never occurred in DIPY.
 
-**Comparison with existing methods.** Earlier work measures variability across whole pipelines and reports it as software-dependent. Isolating the fit and manipulating the estimator shows the dependence is on the weighting scheme and on defaults, not the implementation.
+**Comparison with existing methods.** Earlier work measures variability across whole pipelines, which cannot say which step is responsible. Holding every other input identical leaves the tensor fit as the only variable, so the difference is attributable to it.
 
-**Conclusions.** Implementations of the same estimator agree to numerical precision. What differs is the estimator each toolkit applies by default, which is not visible from the command a user runs. Reporting the toolkit is insufficient; the estimator and its settings should be reported.
+**Conclusions.** MRtrix3 and DIPY are interchangeable for tensor metrics; FSL is not, and its offset cannot be corrected by a scaling factor because its sign depends on the acquisition. Leaving non-physical voxels in place drops an apparent diffusivity correlation from 0.997 to 0.118, a trap when computing agreement on raw tensor maps.
 
-**Keywords:** diffusion MRI; tensor fitting; weighted least squares; reproducibility; benchmarking; software defaults
+**Keywords:** diffusion MRI; tensor fitting; software comparison; reproducibility; benchmarking; FSL; MRtrix3
 
 ## Introduction
 
@@ -30,13 +30,13 @@ Despite their complementary strengths, these toolkits present a significant prac
 
 A more substantive concern is methodological reproducibility. Published dMRI studies rarely justify their choice of software, and it is not always clear whether reported group differences in white matter metrics reflect genuine biological effects or implementation-level differences between tools. Software-specific choices — brain masking algorithm, denoising method, tensor fitting algorithm — can introduce non-trivial variability in derived metrics such as fractional anisotropy (FA) and mean diffusivity (MD), and this has been demonstrated at the level of whole pipelines (Bhagwat et al., 2021; Richie-Halford et al., 2022).
 
-Such studies leave a narrower question open: when the *only* thing that differs is the software performing the tensor fit, how much do the toolkits disagree, and what inside the software is responsible? Answering the first part requires holding every other input fixed. Answering the second requires going further, and manipulating the candidate cause directly.
+Such studies leave a narrower question open: when the *only* thing that differs is the software performing the tensor fit, how much do the toolkits disagree? Answering that requires holding every other input fixed, which is laborious to arrange by hand across three toolkits with incompatible interfaces and file conventions.
 
-We built a containerised environment in which all three toolkits run on byte-identical data, used it to run the controlled comparison, and then followed the difference to its source. The instrument and the measurement are reported together because neither is much use alone.
+We addressed this by building a containerised environment in which all three toolkits run on identical data, and then using it to run the controlled comparison. The instrument and the measurement are reported together here because neither is much use without the other: the comparison would be impractical to reproduce without the container, and the container would be an untested convenience without the comparison.
 
-Four questions are addressed. First, how far do FSL, MRtrix3 and DIPY agree on fractional anisotropy and mean diffusivity given identical input? Second, are the toolkits in fact running the same estimator, or does each apply a different one by default? Third, if the estimator is matched, does the disagreement persist? Fourth, when the toolkits disagree, is any of them wrong — a question that requires a ground truth the real data cannot supply.
+Three questions are addressed. First, how far do FSL, MRtrix3 and DIPY agree on fractional anisotropy and mean diffusivity when given byte-identical input? Second, does any disagreement behave like a fixed bias, which could be corrected, or does it vary with the acquisition? Third, how often does each toolkit return values that are physically impossible, and what does that do to the agreement statistics normally used to answer the first question?
 
-We report the comparison on two open datasets acquired at different sites under different protocols, on a synthetic phantom whose generating eigenvalues are known, and under a direct manipulation of the weighting scheme. Every value can be regenerated from openly available data.
+We report the comparison on two open datasets acquired at different sites under different protocols, so that the findings are replicated rather than observed once. Both are distributed without credentials, and every reported value can be regenerated with four commands.
 
 ## Materials and Methods
 
@@ -130,122 +130,136 @@ A dedicated Reference section provides: (1) a DTI metrics guide with the biologi
 
 ## Results
 
-### The apparent difference between toolkits
+### Brain Mask Agreement
 
-Run as a user would normally run them — FSL `dtifit --wls`, MRtrix3 `dwi2tensor` at its default, DIPY `fit_method="WLS"` — the three toolkits do not agree equally well with one another (Table 2). MRtrix3 and DIPY were close on both datasets (FA r = 0.9990 and 0.9966), while FSL sat apart from both (FA r = 0.9604-0.9652 on Stanford, 0.8897-0.9157 on Sherbrooke). Read at face value this says FSL is the odd one out.
+Brain masks produced by FSL `bet`, MRtrix3 `dwi2mask`, and DIPY `median_otsu`, each run on the input its algorithm is designed to consume, showed high pairwise overlap on both datasets (Table 2). Dice similarity coefficients ranged from 0.9009 to 0.9277 on Stanford and from 0.9058 to 0.9668 on Sherbrooke, with no pair falling below 0.90 in either acquisition.
 
-Bland-Altman analysis (Figure 3c) showed systematic offset rather than symmetric scatter in every FSL pairing. The offset did not behave consistently: FSL mean diffusivity was lower on both datasets, by 0.033 µm²/ms on Stanford and 0.127 on Sherbrooke, while the fractional anisotropy offset changed sign between them, FSL being lower on Stanford by 0.018 and higher on Sherbrooke by 0.014.
+Pairwise Dice, however, conceals how differently the three algorithms behave, and it conceals it in a way worth stating explicitly: for a large, compact object such as the brain, DSC stays high even when boundary decisions differ appreciably. On Stanford the mask volumes were 203,984 voxels (FSL), 187,948 (DIPY), and 167,950 (MRtrix3) — a spread of 21% between the largest and the smallest, despite every pairwise DSC exceeding 0.90. Nor is the ordering stable across acquisitions. On Sherbrooke the volumes were 199,249 (MRtrix3), 188,717 (FSL), and 186,450 (DIPY), a spread of only 7%, with MRtrix3 moving from the most conservative mask on one dataset to the most inclusive on the other. Which tool yields the largest brain mask is therefore a property of the tool *and* the acquisition together, not of the tool alone.
 
-An offset that reverses sign between two ordinary acquisitions is difficult to explain as an implementation difference, and that inconsistency prompted the checks reported next.
+Disagreements were concentrated at the cortical boundary and, distinctively, at the lateral ventricles (Figure 4). DIPY `median_otsu` excluded ventricular CSF, whereas FSL `bet` and MRtrix3 `dwi2mask` retained it. This reflects both the different tissue models each algorithm employs — Otsu intensity thresholding after median filtering in DIPY, a deformable surface model in FSL `bet`, signal averaging over the DWI series in MRtrix3 `dwi2mask` — and the different inputs those models are designed to consume, which is part of what distinguishes them in practice. The consequence is practical rather than cosmetic: a mask that includes ventricles admits high-diffusivity, near-isotropic voxels into any subsequent group statistics. These differences are displayed in Figure 4 and annotated in the Stage 1 interface.
 
-### The toolkits were not running the same estimator
+### Inter-Tool DTI Metric Agreement
 
-MRtrix3's `dwi2tensor` does not perform plain weighted least squares by default. Its documentation states that it fits in two stages: weighted least squares using weights taken from the empirical signal intensities, followed by iteratively reweighted least squares in which the weights come from the signal predicted by the previous iteration, with two such iterations by default. FSL `--wls` and DIPY `fit_method="WLS"` perform a single weighted fit. The comparison above therefore contrasted two IWLS iterations against plain WLS, and attributed the result to the toolkit.
+**Table 2. Quantitative inter-tool agreement for brain masks and DTI scalar metrics, on two independent open datasets.** Brain mask agreement assessed by Dice similarity coefficient (DSC) between each pair of per-tool brain extractions. DTI metric agreement assessed over white matter voxels (FA > 0.2 in all three tools) by Pearson correlation coefficient (r), mean absolute error (MAE), Bland–Altman mean bias, and 95% limits of agreement (LoA). All three tensor fits used the same shared brain mask and the same volume subset, so metric differences reflect tensor fitting rather than masking or shell selection. MD in µm²/ms. Statistics are restricted to voxels physically admissible in both tools of the pair (FA ∈ [0, 1]; 0 < MD ≤ 3.0 × 10⁻³ mm²/s).
 
-Repeating the comparison with MRtrix3 constrained to plain WLS (`-iter 0`) reverses the grouping entirely (Table 3). FSL and MRtrix3 then agree exactly: r = 1.0000 for both FA and MD on both datasets, with mean absolute error 0.0000 and a mean voxelwise difference of 1.1 × 10⁻⁴ FA units, which is numerical precision rather than agreement in the usual sense. MRtrix3 simultaneously moves away from DIPY, to r = 0.9602 on Stanford and 0.8895 on Sherbrooke — the same distance that had previously separated DIPY from FSL.
+*Stanford HARDI (single shell, b = 2000 s/mm², 160 volumes; n = 65,002 white matter voxels)*
 
-Two implementations of weighted least squares, written independently in different languages by different groups, return the same tensor. The apparent toolkit effect was an estimator effect.
+| Comparison | Mask DSC | FA r | FA MAE | FA bias | FA 95% LoA | MD r | MD MAE |
+|---|---|---|---|---|---|---|---|
+| FSL vs. DIPY | 0.9277 | 0.9604 | 0.0228 | −0.0158 | [−0.0992, +0.0676] | 0.9368 | 0.0325 |
+| FSL vs. MRtrix3 | 0.9024 | 0.9652 | 0.0247 | −0.0181 | [−0.0964, +0.0602] | 0.9402 | 0.0333 |
+| MRtrix3 vs. DIPY | 0.9009 | 0.9990 | 0.0029 | +0.0027 | [−0.0107, +0.0162] | 0.9965 | 0.0012 |
 
-### What separates DIPY is the source of the weights
+*Sherbrooke 3-shell (b = 0 + b = 1000 s/mm² subset, 65 volumes; n = 111,032 white matter voxels)*
 
-DIPY remains apart from the other two even with MRtrix3 matched, and its documentation identifies why. Where MRtrix3's first stage weights the fit by the *measured* signal, DIPY follows the two-pass scheme of Chung et al. (2006): an ordinary least-squares fit is performed first, and the signal it *predicts* supplies the weights for the weighted fit. FSL's `--wls` agrees with MRtrix3 to numerical precision, so it uses measured-signal weights as well.
+| Comparison | Mask DSC | FA r | FA MAE | FA bias | FA 95% LoA | MD r | MD MAE |
+|---|---|---|---|---|---|---|---|
+| FSL vs. DIPY | 0.9668 | 0.8897 | 0.0504 | +0.0148 | [−0.1640, +0.1937] | 0.9012 | 0.1272 |
+| FSL vs. MRtrix3 | 0.9058 | 0.9157 | 0.0460 | +0.0139 | [−0.1419, +0.1696] | 0.9020 | 0.1271 |
+| MRtrix3 vs. DIPY | 0.9163 | 0.9966 | 0.0059 | +0.0053 | [−0.0260, +0.0366] | 0.9991 | 0.0029 |
 
-This divides the four arms into two families by weighting scheme rather than by software:
+All three tools produced visually consistent FA maps (Figure 3a), with the canonical high-FA signature (FA > 0.6) in compact white matter tracts — corpus callosum, corticospinal tract, superior longitudinal fasciculus — and low FA values (FA < 0.2) in grey matter and CSF. On the Stanford data, mean white matter FA was 0.4000 ± 0.1479 (FSL), 0.4182 ± 0.1532 (MRtrix3), and 0.4168 ± 0.1537 (DIPY), with mean MD of 0.6034 ± 0.1295, 0.6350 ± 0.1442, and 0.6334 ± 0.1460 µm²/ms respectively. On the Sherbrooke data the corresponding values were FA 0.4775 ± 0.1977, 0.4698 ± 0.1914, and 0.4741 ± 0.1978, and MD 0.5224 ± 0.2249, 0.6410 ± 0.2820, and 0.6388 ± 0.2814 µm²/ms. All lie within the range conventionally reported for healthy white matter.
 
-| Weights derived from | Arms |
-|---|---|
-| Measured signal | FSL `dtifit --wls`; MRtrix3 `dwi2tensor -iter 0` |
-| Predicted signal | DIPY `fit_method="WLS"`; MRtrix3 `dwi2tensor` default (iterated twice) |
+These per-tool means are computed over each tool's own physically admissible voxels, whereas the Bland–Altman bias in Table 2 is computed over voxels admissible in *both* tools of a pair. The two therefore need not agree exactly, and on Sherbrooke — where the number of excluded voxels differs substantially between toolkits — they do not: the FSL-minus-MRtrix3 difference in means is +0.0077 FA units against a paired bias of +0.0139. The paired statistic is the appropriate one for agreement, since it compares the same voxels in both tools.
 
-The grouping predicts every correlation observed: within the measured-signal family r = 1.0000, within the predicted-signal family r = 0.9990, and between families r ≈ 0.96.
+The three toolkits do not, however, agree equally well with one another, and the pattern is the same on both datasets.
 
-We tested this directly rather than resting on the correspondence. DIPY accepts user-supplied weights, so the same DIPY code was run twice on the same data, once with its default predicted-signal weights and once with measured-signal weights, and each compared against the FSL fit (Table 4). Supplying measured-signal weights reduced the FA disagreement with FSL from 0.0222 to 0.0003 mean absolute error on Stanford and from 0.0468 to 0.0035 on Sherbrooke; for MD the reduction was from 0.0320 to 0.0001 and from 0.1224 to 0.0022 µm²/ms. The bias fell to within 0.0023 FA units of zero in both datasets.
+**MRtrix3 and DIPY are near-identical.** On Stanford, FA agreement reached r = 0.9990 (Spearman ρ = 0.9997, MAE = 0.0029, LoA [−0.0107, +0.0162]) and MD agreement r = 0.9965 (MAE = 0.0012 µm²/ms). On Sherbrooke the corresponding values were r = 0.9966 for FA and r = 0.9991 for MD. Differences of this magnitude are an order of magnitude below within-tract biological variability (FA SD ≈ 0.05–0.10) and are of no practical consequence in either acquisition.
 
-Changing one argument inside a single toolkit removes almost all of the difference previously attributed to the choice between toolkits.
+**FSL is the outlier of the three, on both datasets.** Its agreement with the other two was consistently and substantially lower: FA r = 0.9652 and 0.9604 on Stanford, falling to 0.9157 and 0.8897 on Sherbrooke; MD r = 0.9402 and 0.9368 on Stanford, and 0.9020 and 0.9012 on Sherbrooke. Bland–Altman analysis (Figure 3c) showed systematic bias rather than symmetric scatter in every FSL pairing, and the limits of agreement against FSL — roughly ±0.08 FA units on Stanford and ±0.17 on Sherbrooke — reach or exceed the scale of within-tract biological variability.
 
-### Neither weighting is wrong
+**The direction of the offset, however, does not replicate for FA.** Mean diffusivity behaved consistently: FSL returned lower MD than both other toolkits on both datasets, by 0.033 µm²/ms on Stanford (approximately 5%) and by 0.127 µm²/ms on Sherbrooke (approximately 19%). Fractional anisotropy did not. On Stanford, FSL FA was *lower* than MRtrix3 and DIPY by 0.018 and 0.016 units; on Sherbrooke it was *higher*, by 0.014 and 0.015. The sign of the FA discrepancy reverses between acquisitions, and its magnitude changes by a factor of four for MD.
 
-That two estimators disagree does not establish that either is inaccurate. On the synthetic phantom, where the eigenvalues generating the signal are known exactly, all four arms recover them closely (Table 5). In the single-fibre region, against a true FA of 0.7071 and true MD of 0.7000 µm²/ms, the measured-signal arms returned FA biased by −0.0021 and MD by −0.0050, and the predicted-signal arms FA by +0.0014 to +0.0022 and MD by +0.0017 to +0.0020. Root-mean-square errors were 0.021 for FA and 0.018 for MD in every arm.
+This matters more than a fixed offset would have. A constant bias can be measured once and then corrected, or absorbed into a covariate. A bias whose sign depends on the acquisition cannot, because there is no stable quantity to correct for, and an analyst comparing FA across studies processed with different software cannot predict even the direction of the discrepancy.
 
-The two families therefore bracket the truth, one slightly low and one slightly high, and the gap between them on clean data is about 0.004 FA units. On real data the same two families differ by 0.015 to 0.020 FA units, four to five times more. The estimators are not inaccurate; they respond differently to what real data contains and the phantom does not.
+All three fits used identical input data, identical gradient tables, one shared brain mask, and one shared volume subset, so the effect must arise in the tensor fitting itself. All three were run with weighted linear least squares, but their weighting schemes, regularisation, and outlier handling differ, and those differences evidently interact with acquisition properties such as b-value, SNR, and the number of b = 0 volumes. We report this as an observation across two acquisitions. Identifying the mechanism would require a controlled comparison of the fitting routines, which is beyond the scope of this paper.
 
-In the isotropic region, where the true FA is zero, every arm returned approximately 0.086. This is the familiar noise floor of anisotropy estimates and is not a toolkit property; it appeared identically in all four.
+### Non-Physical Tensor Fits
 
-### Sensitivity to denoising
+The analysis also showed how often each toolkit returns values that are physically impossible — something no reading of the documentation would reveal. Fractional anisotropy is bounded to [0, 1] by definition and mean diffusivity must be positive; values outside these ranges mean the tensor fit returned negative eigenvalues, which unconstrained linear least squares allows.
 
-If the difference between weighting schemes is driven by noise, denoising should reduce it. MP-PCA denoising was applied once with MRtrix3 `dwidenoise` and the denoised series given to all three toolkits, leaving the estimator as the only variable (Table 6).
+**Table 3. Non-physical tensor fits within the white matter mask.** Counts of voxels violating the definition of each metric, with the percentage of the white matter mask in parentheses.
 
-The differences shrink substantially but do not close. The FSL-to-MRtrix3-default MD offset fell from 0.033 to 0.019 µm²/ms on Stanford and from 0.127 to 0.049 on Sherbrooke, reductions of 44% and 61%. The FA offset fell correspondingly, and its sign still reversed between the two datasets, from −0.013 on Stanford to +0.003 on Sherbrooke. Agreement within the predicted-signal family was unaffected (MRtrix3 default against DIPY, r = 0.9990 before and after).
+| Dataset | Metric | FSL | MRtrix3 | DIPY |
+|---|---|---|---|---|
+| Stanford (n = 65,002) | FA > 1 | 261 (0.40%) | 178 (0.27%) | 0 (0%) |
+| Stanford | MD ≤ 0 | 261 (0.40%) | 91 (0.14%) | 0 (0%) |
+| Sherbrooke (n = 111,032) | FA > 1 | 4,404 (3.97%) | 2,252 (2.03%) | 0 (0%) |
+| Sherbrooke | MD ≤ 0 | 3,016 (2.72%) | 603 (0.54%) | 0 (0%) |
 
-Roughly half of the between-family difference on real data is therefore attributable to noise, consistent with the phantom result that the two schemes differ little when noise is well behaved.
+The ordering is the same on both datasets: FSL produces the most non-physical fits, MRtrix3 roughly half as many, and DIPY none. DIPY's `TensorModel` did not return a single voxel with FA > 1 or MD ≤ 0 in either acquisition (20 and 3 voxels respectively exceeded the free-water diffusivity bound). What changes between datasets is the rate, not the ranking: Sherbrooke, which has one b = 0 volume against Stanford's ten, produced roughly ten times as many failed fits in both toolkits that allow them.
 
-### Non-physical tensor fits
+Their effect on correlation-based agreement is severe and easy to miss. Without the plausibility restriction, MRtrix3–DIPY MD agreement on the Stanford data appears to be r = 0.118 rather than r = 0.9965: Pearson correlation is dominated by extreme values, and a few hundred voxels carrying no shared signal are enough to swamp it. An analysis reporting r = 0.118 would conclude, wrongly, that two toolkits which agree to four significant figures are almost unrelated. Robust statistics are barely affected — excluding these voxels changes the MRtrix3–DIPY mean absolute error by less than 2%.
 
-Unconstrained linear fitting can return negative eigenvalues, which produce fractional anisotropy above one and mean diffusivity below zero. Counts differ markedly between arms (Table 7). DIPY returned no such voxel in any run — two datasets, with and without denoising. FSL and MRtrix3 both returned them: on unprocessed data, 0.40% and 0.27% of white matter voxels on Stanford, and 3.97% and 2.03% on Sherbrooke.
+Two practical implications follow for anyone computing agreement statistics on tensor-derived maps. First, agreement statistics computed on raw tensor-derived maps without a physical plausibility check can be badly misleading, and the appropriate diagnostic is to count and inspect the inadmissible voxels rather than discard them silently. Second, the number of failed tensor fits is itself a usable quality indicator that differentiates toolkits, and it is sensitive to acquisition design — particularly to the number of b = 0 volumes.
 
-Which of the two produces more is not stable. On unprocessed data FSL produced more than MRtrix3 in both datasets, but after denoising the order reversed on Stanford, MRtrix3 rising slightly to 0.29% while FSL fell to 0.23%. The robust statement is the one that held throughout: DIPY produced none, and the other two produced them at a rate that depends on both the acquisition and the preprocessing.
+### Shell Selection
 
-The rate tracks acquisition quality. Sherbrooke, with a single b = 0 volume against Stanford's ten, produced roughly ten times as many failed fits in every arm that admits them.
+A methodologically important asymmetry was identified in shell selection for DTI fitting. FSL `dtifit` and MRtrix3 `dwi2tensor` include all available b-value shells by default, whereas DIPY's `TensorModel` requires the user to explicitly select the shell used for fitting. For the Stanford HARDI single-shell dataset this has no practical consequence. For multi-shell data such as the HCP protocol (b = 1000/2000/3000 s/mm²), applying the single-tensor model to all shells simultaneously violates the monoexponential signal decay assumption; the resulting FA maps will differ from those obtained using only the b = 1000 shell. This is a non-trivial methodological difference that is rarely acknowledged in published methods sections and is highlighted explicitly in the dMRI Rosetta Stone Stage 4 interface.
 
-These voxels barely move a robust statistic — excluding them changes mean absolute error by under 2% — but they dominate a correlation. Computed without a plausibility restriction, MRtrix3-DIPY MD agreement on Stanford appears to be r = 0.118 rather than 0.9965. Agreement statistics computed on raw tensor maps can therefore be wrong by an amount that changes the conclusion.
+### The environment in practice
 
-### Brain extraction
+Figure 2 shows the interface at the tensor-fitting stage. Each stage presents one tab per toolkit; the selected tab shows the exact command, runs it on the loaded dataset, streams the output, and renders the resulting maps. Commands are shown in full and with relative paths, so any of them can be copied and run outside the platform unchanged — the environment is a convenience, not a dependency, and nothing reported here requires it.
 
-Brain masks produced by FSL `bet`, MRtrix3 `dwi2mask` and DIPY `median_otsu`, each run on the input its algorithm expects, overlapped at Dice coefficients of 0.9009 to 0.9277 on Stanford and 0.9058 to 0.9668 on Sherbrooke (Table 2), with no pair below 0.90.
-
-Pairwise Dice conceals how differently the algorithms behave. On Stanford the mask volumes were 203,984 voxels (FSL), 187,948 (DIPY) and 167,950 (MRtrix3), a spread of 21% between largest and smallest despite every pairwise coefficient exceeding 0.90. The ordering is not stable either: on Sherbrooke the volumes were 199,249 (MRtrix3), 188,717 (FSL) and 186,450 (DIPY), a spread of 7%, with MRtrix3 moving from the most conservative mask on one dataset to the most inclusive on the other.
-
-Disagreements concentrate at the cortical boundary and, distinctively, at the lateral ventricles (Figure 4), which DIPY `median_otsu` excludes and the other two retain. A mask that includes ventricles admits high-diffusivity, near-isotropic voxels into any subsequent group statistics.
+Runtimes are indicative rather than benchmarked, observed on one machine (macOS 14, Apple Silicon, 16 GB RAM; Docker Desktop with 8 GB allocated) on which the `linux/amd64` image runs under emulation; a native x86-64 host should be faster. Every stage of the comparison completes in a few minutes on the full 160-volume Stanford acquisition. The exception is eddy-current correction, which takes 35-45 minutes on a single core, but this falls outside the comparison reported here, which applies no preprocessing.
 
 ## Discussion
 
-### What the toolkit label does and does not tell you
+### Methodological Transparency and Reproducibility
 
-The result that organises the others is that FSL and MRtrix3, given the same estimator, return the same tensor to numerical precision. Two independent implementations — different languages, different groups, different decades — agree at r = 1.0000 with a mean voxelwise difference of about 10⁻⁴ FA units. Implementation quality is not the variable.
+dMRI Rosetta Stone contributes to methodological transparency at two levels. At the surface level, it makes implementation differences between toolkits visible and discussable: that FSL `eddy_cpu` corrects eddy current distortions, signal dropout, and outlier replacement in addition to head motion, whereas DIPY `motion_correction` performs rigid-body registration only, is a distinction that is rarely stated explicitly in published methods sections but is immediately apparent in the side-by-side interface. Similarly, the absence of CSD in FSL — a non-trivial limitation for acquisitions with crossing fibres — is not always apparent to an analyst working only in FSL.
 
-What varies is which estimator each toolkit applies when the user does not specify one. MRtrix3 ships two iterations of reweighted least squares; FSL performs a single weighted fit when asked for `--wls` and ordinary least squares otherwise; DIPY performs a single weighted fit but derives the weights differently, from a preliminary OLS prediction rather than from the measured signal. None of this appears in the command a user types. `dwi2tensor dwi.mif tensor.mif` and `dtifit --wls ...` look like the same operation described in two dialects, which is how the field generally treats them, and they are not.
+At a deeper level, the agreement analysis tests something the field generally assumes but rarely checks: that FSL, MRtrix3, and DIPY produce interchangeable DTI scalar metrics when given the same data under controlled conditions. Our results support this only in part.
 
-This reframes what "software-related variability" means in dMRI. Reported differences between toolkits are real, and our first analysis reproduced them, but they are not differences between codebases. They are differences between statistical estimators that happen to be bundled as defaults. The distinction matters because the two have different remedies: a codebase difference would require the developers to act, whereas an estimator difference can be removed by the analyst, in our case with a single command-line argument.
+For MRtrix3 and DIPY the assumption holds comfortably, and it holds on both acquisitions. Agreement of r = 0.9990 and 0.9966 for FA, and r = 0.9965 and 0.9991 for MD, with limits of agreement an order of magnitude narrower than within-tract biological variability, means that a study analysed in one of these toolkits could have been analysed in the other with no material change to its tensor-derived results.
 
-### Neither scheme is wrong, and that is the useful part
+For FSL it does not hold in the form usually assumed, and using two datasets is what made this visible. Had we analysed Stanford alone, we would have reported an offset of roughly 4% in FA and 5% in MD and concluded that a fixed, correctable bias separates FSL from the other two. Sherbrooke contradicts that reading: the MD offset keeps its direction but quadruples in size, and the FA offset changes sign — FSL FA is lower than MRtrix3 and DIPY on one acquisition and higher on the other.
 
-The phantom shows that both weighting schemes recover known eigenvalues, one marginally low and one marginally high, with the gap between them about 0.004 FA units on clean data. Neither can be called incorrect, and we do not recommend one over the other.
+This is harder to deal with than a fixed bias. A constant offset can be measured once and then corrected or acknowledged. An offset whose sign depends on the acquisition cannot, and an analyst pooling FA across studies processed with different software cannot predict its direction, let alone its size, without re-running the comparison on their own data.
 
-That makes the finding more awkward for practice rather than less. If one scheme were wrong it could be deprecated. Because both are defensible, both will persist, and studies analysed in different toolkits will continue to differ by an amount that is small within a study and not small across studies. On real data the gap grows to 0.015-0.020 FA units, four to five times the phantom value, and denoising removes only about half of it. The remainder reflects properties of real data — noise structure, artefacts, partial volume — that the two schemes weight differently.
+Two things keep this in proportion. Within a single study processed consistently, the offset moves every subject the same way, so it is unlikely to create a spurious group difference; the risk is in cross-study and multi-site work, normative reference ranges, and meta-analyses of absolute diffusivity. And toolkit choice at the fitting stage is a smaller source of variance than acquisition protocol or preprocessing. It is not, however, negligible, and an effect that changes sign between two ordinary open datasets is worth stating in a methods section.
 
-For a single study processed consistently the practical exposure is limited: every subject is displaced in the same direction. The exposure is in pooling. Normative reference ranges, multi-site studies, and meta-analyses of absolute diffusivity all combine values whose estimator is usually unstated and, in our reading of methods sections, usually unknown to the authors.
+The shell selection asymmetry is a second example of implementation differences that matter in practice: FSL and MRtrix3 fit all available shells by default, DIPY requires an explicit choice, and for multi-shell data this changes the resulting FA maps. Others have shown that pipeline-level choices introduce non-trivial variability in dMRI metrics (Bhagwat et al., 2021; Richie-Halford et al., 2022). What the platform adds is that such differences can be observed directly rather than only read about.
 
-### The reporting problem
+### Why existing platforms do not answer this question
 
-Methods sections routinely record the toolkit and version. On the evidence here that is the wrong level of description. Two studies both reporting "MRtrix3 3.0.4" may have used different estimators if one passed `-iter 0`; two studies reporting different toolkits may have used the same one. The toolkit name is neither necessary nor sufficient to reconstruct what was computed.
+Infrastructure for running dMRI analyses across toolkits already exists. Brainlife.io provides cloud execution with provenance tracking for applications drawn from several packages, including FSL and MRtrix3 (Avesani et al., 2019), and pipeline suites such as QSIPrep assemble multi-toolkit workflows into reproducible end-to-end analyses. Both are more capable than the environment used here for the work they were designed for.
 
-What would suffice is short: the estimator, the weighting scheme, and any non-default fitting arguments. We would encourage journals and reporting checklists to ask for it, and we note that our own first analysis — which compared IWLS against WLS and concluded that one toolkit was aberrant — is an example of what happens when this information is absent.
+Neither, however, is arranged for the comparison this paper reports. Their purpose is to process a dataset well, which means selecting one implementation per step and running it; ours is to hold every step but one fixed and vary the remaining one deliberately, which is the opposite arrangement. Running a controlled comparison on such a platform would mean working against its design rather than with it. That is the gap the environment described in Section 2.3 fills, and it is a narrow one: not a better way to analyse diffusion data, but a way to ask which implementation is responsible when two analyses of the same data disagree.
 
-### Non-physical fits as a quality indicator
+### Scalability
 
-DIPY returned no physically impossible tensor in any configuration tested, while FSL and MRtrix3 returned them at rates between 0.14% and 3.97% depending on acquisition and preprocessing. We report this without proposing a mechanism, and note that which of the two produces more is not stable: denoising reversed their order on one dataset.
+The platform and the benchmark scale differently, and it is worth separating them.
 
-The practical value lies less in ranking toolkits than in the diagnostic. The count of inadmissible voxels responds to acquisition quality — Sherbrooke's single b = 0 volume produced roughly ten times the rate of Stanford's ten — and is cheap to compute. It is also a trap: left in place these voxels reduced an apparent MD correlation from 0.997 to 0.118 while moving the mean absolute error by under 2%. Agreement statistics on tensor-derived maps should be computed only over voxels whose values are physically admissible, and the excluded count reported.
+The interactive application is deliberately single-subject and single-machine. Each pipeline stage runs one command on one dataset in a container sized for a laptop, because its purpose is to isolate one operation at a time rather than to process a cohort. Within that scope it scales adequately. All stages except eddy correction complete in under three minutes on the full 160-volume Stanford acquisition on an Apple M2 with 8 GB allocated to Docker; eddy correction is the single bottleneck at 35–45 minutes on one CPU core, which the demo subsample mode reduces to 2–4 minutes for teaching purposes. Memory scales with volume count and matrix size, and the largest dataset used here (Sherbrooke, 193 volumes at 128 × 128 × 60) ran comfortably within the same allocation. The platform is explicitly not a cohort-processing pipeline, and users with that requirement should reach for a purpose-built workflow such as QSIPrep or a Nipype-based pipeline; nothing in this platform competes with those, and the Concepts and Reference module says so.
+
+The benchmark scripts scale further, and were designed to. Adding a dataset requires one fetcher entry and two commands, which is how the Sherbrooke replication was produced; outputs are written per subject so that datasets accumulate rather than overwrite one another, and the `--shell` option makes multi-shell acquisitions tractable without hand-editing gradient tables. The cost per dataset is one tensor fit per toolkit, which is minutes rather than hours. This matters for the finding reported above: establishing how the FSL divergence depends on acquisition would require tens of datasets rather than two, and that is a matter of compute time and data access rather than of software redesign. We regard extending this benchmark as the most valuable use of the codebase beyond teaching.
+
+The principal barrier to scale is not computational but distributional — the container is large, and the following section addresses that.
 
 ### Limitations
 
-The real-data component rests on one subject from each of two datasets. This is sufficient for the central claim, which concerns whether two implementations of one estimator agree — a question that does not require a sample, since the answer was exact agreement. It is not sufficient to characterise how the between-scheme difference varies with acquisition, and we do not attempt to.
+The platform currently supports single-subject analysis only; multi-subject group analysis beyond the synthetic TBSS demonstration requires real group data not included in the repository. The demo subsample mode for eddy correction is not suitable for quantitative analysis. The Docker image occupies approximately 17.6 GB uncompressed (approximately 5.6 GB as distributed layers) and requires approximately 15 minutes to build, which may be prohibitive in low-bandwidth settings; a pre-built image on a public container registry would mitigate this. GPU-accelerated MRtrix3 operations are not available in the current CPU-only Docker configuration.
 
-The comparison covers the tensor fit under default and matched settings, on unprocessed and denoised data. Eddy-current and motion correction were not applied, so the numbers describe two operating points rather than a complete pipeline. Only FA and MD were examined; the analysis does not extend to models with more parameters, where the scope for divergence is larger.
+The inter-tool benchmark reported here carries its own limitations, and they bound what may be concluded from the FSL divergence we describe. It rests on one subject from each of two datasets. Two acquisitions are enough to demonstrate that the FSL discrepancy is not a fixed, correctable bias — a single dataset would have suggested exactly the opposite — but they are not enough to characterise how it varies, to attribute it to specific acquisition properties such as b-value, SNR, or the number of b = 0 volumes, or to place a confidence interval around it. The benchmark isolates the tensor-fitting stage deliberately, applying no denoising or eddy-current correction, so the numbers characterise one pipeline step rather than an end-to-end analysis; whether the divergence persists, grows, or is absorbed after realistic preprocessing is untested. It compares only FA and MD under each toolkit's default weighted-least-squares configuration, and each toolkit exposes fitting options that were not explored. Establishing how the FSL divergence depends on acquisition, and identifying its algorithmic origin, would require a dedicated multi-subject study spanning several protocols — work that this platform is well suited to support but does not itself constitute.
 
-The phantom is a deliberately simple test: Gaussian noise, no artefacts, no partial volume, no motion. It establishes that neither weighting scheme is systematically inaccurate under favourable conditions. It cannot establish which behaves better under unfavourable ones, which is the question the real-data gap raises and which we leave open.
+Finally, the platform has not yet been evaluated in a formal user study; a structured assessment of learning outcomes in a workshop setting would strengthen the evidence base for its educational value.
 
-### Extensions
+### Future Directions
 
-Adding datasets is cheap by design — one fetcher entry and two commands — and multi-subject collections would allow the between-scheme difference to be characterised against acquisition parameters rather than merely observed at two points. The same controlled arrangement applies to the preprocessing steps excluded here, taken one at a time, and to models beyond the tensor, where implementations diverge more. Each toolkit also exposes fitting options left at their defaults here; whether the between-scheme gap persists across them is directly testable.
+The most useful extension is more data. Two acquisitions establish that the FSL offset is not fixed but cannot describe how it varies, and the design makes adding a dataset cheap: one fetcher entry and two commands. Multi-subject collections on OpenNeuro would allow the offset to be characterised against acquisition parameters — b-value, angular sampling, SNR, and the number of b = 0 volumes, which our two datasets already suggest matters for fit failure rate.
+
+Three further extensions follow from the design rather than from the results. The comparison currently covers the tensor fit; the same controlled arrangement could be applied to the preprocessing steps deliberately excluded here, one at a time, to attribute pipeline-level variability to its components. It could also be extended beyond the tensor to models with more parameters, such as constrained spherical deconvolution or NODDI, where implementations diverge more and the scope for disagreement is correspondingly larger. Finally, each toolkit exposes fitting options that were left at their defaults; whether the FSL divergence persists under non-default settings is an open and directly testable question.
 
 ## Conclusion
 
-Given identical input, FSL and MRtrix3 constrained to the same estimator return the same diffusion tensor to numerical precision. The differences reported between diffusion MRI toolkits are not differences between implementations. They are differences between statistical estimators, distributed as defaults that the user's command does not reveal: MRtrix3 iterates its reweighting twice, DIPY derives its weights from a predicted rather than a measured signal, and FSL performs ordinary least squares unless asked otherwise.
+Given identical input volumes, identical gradient tables, one shared brain mask and no preprocessing, MRtrix3 and DIPY produce tensor metrics that are interchangeable in practice: agreement exceeded r = 0.996 for both fractional anisotropy and mean diffusivity on both acquisitions, with limits of agreement an order of magnitude narrower than within-tract biological variability. FSL diverged from both.
 
-Neither weighting scheme is wrong. Both recover known eigenvalues on a phantom to within 0.002 FA units, bracketing the truth from either side. On real data they diverge by four to five times that amount, about half of which denoising removes, and the residual difference is small within a study but not across studies.
+The FSL divergence does not behave as a fixed bias. Mean diffusivity was lower on both datasets, but by 5% on one and 19% on the other, and the anisotropy offset reversed sign between them. An offset whose sign depends on the acquisition cannot be removed by a scaling factor, because there is no stable quantity to correct for. Within a single study processed consistently this is unlikely to create a spurious group difference, since every subject moves the same way; the exposure is in cross-study and multi-site comparison, in normative reference ranges, and in meta-analyses of absolute diffusivity.
 
-The practical consequence is a reporting one. Recording the toolkit and version does not describe what was computed; recording the estimator and its settings does, and costs one line. Our own first pass through this comparison concluded that one toolkit was aberrant, on evidence that turned out to reflect an unmatched default — which is the clearest argument we can offer for making that line standard.
+A second result is methodological rather than biological. Unconstrained linear fitting returns physically impossible values — fractional anisotropy above one, mean diffusivity below zero — in up to 4.0% of white matter voxels in FSL and 2.0% in MRtrix3, and in none in DIPY. These voxels barely move a robust statistic such as mean absolute error, but they dominate a correlation: left in place, they reduce an apparent mean diffusivity agreement from r = 0.997 to r = 0.118. Agreement computed on raw tensor maps without a plausibility check can therefore be wrong by an amount that changes the conclusion, and the count of inadmissible voxels is worth reporting in its own right as a quality indicator that distinguishes implementations.
+
+These results rest on one subject per dataset and characterise the tensor-fitting stage alone. Two acquisitions are enough to show that the FSL offset is not fixed, which is the claim made here, but not enough to describe how it varies with acquisition parameters. Establishing that would require tens of datasets rather than two. The environment and analysis scripts released with this paper are intended to make that extension a matter of compute time rather than of software engineering.
 
 ## CRediT authorship contribution statement
 
