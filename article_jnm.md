@@ -75,6 +75,24 @@ python scripts/generate_fa_maps.py      --subject sherbrooke --shell 1000
 python scripts/compute_fa_comparison.py --subject sherbrooke
 ```
 
+### Matching the estimator
+
+The comparison above compares toolkits at their usual settings, which is what a user encounters, but it does not guarantee that the same estimator is being applied. MRtrix3 `dwi2tensor` performs weighted least squares followed by two iterations of reweighting by default. To place all three on plain WLS we repeated the comparison with `dwi2tensor -iter 0`, which stops after the first weighted fit, alongside FSL `dtifit --wls` and DIPY `fit_method="WLS"`. Both configurations are reported: the default arms because they describe practice, the matched arms because they isolate the estimator.
+
+### Manipulating the weighting scheme
+
+MRtrix3 documents its first stage as weighting by the empirical signal intensities; DIPY documents its weights as the squared signal predicted by an initial ordinary least-squares fit, following Chung et al. (2006). To test whether this accounts for the residual difference we used DIPY's facility for user-supplied weights, running the same DIPY code twice on the same data — once with its default predicted-signal weights, once with the measured signal — and compared each against the FSL fit. Signals were floored at unity before both fits so that the weighted design matrix stays non-singular where a voxel reads zero; both arms received identical clipped data.
+
+### Accuracy against a known ground truth
+
+Agreement between toolkits cannot say whether any of them is accurate. We therefore fitted a synthetic phantom whose generating eigenvalues are known: an isotropic region with eigenvalues 0.9, 0.9, 0.9 × 10⁻³ mm²/s (FA = 0, MD = 0.90 µm²/ms) and a single-fibre region with 1.4, 0.35, 0.35 × 10⁻³ mm²/s (FA = 0.7071, MD = 0.70 µm²/ms), at an SNR of approximately 30. A crossing-fibre region is present in the phantom but excluded from scoring, since no single tensor is correct there by construction. Voxels within two of a region boundary were also excluded, as they mix tissue types. Bias and root-mean-square error against truth are reported for each arm.
+
+### Sensitivity to preprocessing
+
+The comparison applies no denoising or eddy-current correction, so that the fit is examined at a defined starting point rather than after an arbitrary preprocessing choice. To test whether the findings survive realistic preprocessing, we repeated the whole comparison on MP-PCA denoised data. Denoising was performed once, with MRtrix3 `dwidenoise`, on the full series before shell selection, and the denoised data given to all three toolkits. Denoising is thereby held constant and the estimator remains the only variable.
+
+Giving each toolkit its own denoiser would not be a more faithful alternative. FSL provides none, so it would fit noisier data than the other two and any difference could no longer be attributed to the fit. Eddy-current correction was not tested; it corrects geometric distortion, whereas the finding under examination concerns eigenvalue estimation, which is driven by noise.
+
 ### The execution environment
 
 Running three toolkits on byte-identical input is the practical obstacle to a comparison of this kind, and the reason it is rarely done. We removed it by building a single container in which all three are installed and driven from one interface, so the same data can be pushed through each without reinstallation, format conversion, or hand-managed paths. The container is what makes the comparison reproducible by others, and is released with the paper.
@@ -323,54 +341,113 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 
 ## Tables
 
-**Table 1. Pipeline stage coverage across FSL, MRtrix3, and DIPY in dMRI Rosetta Stone.** Dashes indicate the toolkit does not provide a dedicated implementation for that operation.
+**Table 1. Tensor-fitting configurations compared.** The first three rows are each toolkit as a user would normally invoke it; the fourth places MRtrix3 on the same estimator as the other two. Weighting scheme as documented by each project.
 
-| Stage | Operation | FSL | MRtrix3 | DIPY |
-|---|---|---|---|---|
-| 1 | Brain extraction | `bet` | `dwi2mask` | `median_otsu` |
-| 2 | Denoising (MP-PCA) | — | `dwidenoise` | `mppca` |
-| 3 | Eddy and motion correction | `eddy_cpu` | `dwifslpreproc` | `motion_correction` |
-| 4 | DTI fitting | `dtifit` | `dwi2tensor` + `tensor2metric` | `TensorModel` |
-| 5 | CSD / fibre orientation distributions | — | `dwi2fod` (msmt-CSD) | `ConstrainedSphericalDeconvModel` |
-| 6 | Tractography | `probtrackx2` | `tckgen` (iFOD2) + `tcksift2` | `LocalTracking` |
-| 7 | Voxelwise group analysis | `tbss_1–4` + `randomise` | — | — |
+| Arm | Command | Weights derived from | Iterations |
+|---|---|---|---|
+| FSL | `dtifit --wls` | measured signal | 1 |
+| MRtrix3, default | `dwi2tensor` | predicted signal | 2 |
+| DIPY | `TensorModel(fit_method="WLS")` | predicted signal (initial OLS fit) | 1 |
+| MRtrix3, matched | `dwi2tensor -iter 0` | measured signal | 1 |
 
-**Table 2. Quantitative inter-tool agreement for brain masks and DTI scalar metrics, on two independent open datasets.** Brain mask agreement assessed by Dice similarity coefficient (DSC) between each pair of per-tool brain extractions. DTI metric agreement assessed over white matter voxels (FA > 0.2 in all three tools) by Pearson correlation coefficient (r), mean absolute error (MAE), Bland–Altman mean bias, and 95% limits of agreement (LoA). All three tensor fits used the same shared brain mask and the same volume subset, so metric differences reflect tensor fitting rather than masking or shell selection. MD in µm²/ms. Statistics are restricted to voxels physically admissible in both tools of the pair (FA ∈ [0, 1]; 0 < MD ≤ 3.0 × 10⁻³ mm²/s); per-tool counts of excluded voxels are reported in Table 3. All values generated by `scripts/compute_fa_comparison.py`.
+**Table 2. Toolkits at their default settings.** Agreement over white matter voxels (FA > 0.2 in all three), with every input held identical. Pearson r, mean absolute error (MAE) and Bland-Altman mean bias. MD in µm²/ms. Statistics use only physically admissible voxels (FA in [0, 1]; 0 < MD ≤ 3.0 × 10⁻³ mm²/s). Mask DSC compares each pair of brain extractions, each tool run on the input its algorithm expects.
 
-*Stanford HARDI (single shell, b = 2000 s/mm², 160 volumes; n = 65,002 white matter voxels)*
+*Stanford HARDI (n = 65,002 white matter voxels)*
 
-| Comparison | Mask DSC | FA r | FA MAE | FA bias | FA 95% LoA | MD r | MD MAE |
+| Comparison | Mask DSC | FA r | FA MAE | FA bias | MD r | MD MAE | MD bias |
 |---|---|---|---|---|---|---|---|
-| FSL vs. DIPY | 0.9277 | 0.9604 | 0.0228 | −0.0158 | [−0.0992, +0.0676] | 0.9368 | 0.0325 |
-| FSL vs. MRtrix3 | 0.9024 | 0.9652 | 0.0247 | −0.0181 | [−0.0964, +0.0602] | 0.9402 | 0.0333 |
-| MRtrix3 vs. DIPY | 0.9009 | 0.9990 | 0.0029 | +0.0027 | [−0.0107, +0.0162] | 0.9965 | 0.0012 |
+| FSL vs. MRtrix3 | 0.9024 | 0.9652 | 0.0247 | -0.0181 | 0.9402 | 0.0333 | -0.0330 |
+| FSL vs. DIPY | 0.9277 | 0.9604 | 0.0228 | -0.0158 | 0.9368 | 0.0325 | -0.0322 |
+| MRtrix3 vs. DIPY | 0.9009 | 0.9990 | 0.0029 | +0.0027 | 0.9965 | 0.0012 | +0.0009 |
 
-*Sherbrooke 3-shell (b = 0 + b = 1000 s/mm² subset, 65 volumes; n = 111,032 white matter voxels)*
+*Sherbrooke 3-shell (n = 111,032 white matter voxels)*
 
-| Comparison | Mask DSC | FA r | FA MAE | FA bias | FA 95% LoA | MD r | MD MAE |
+| Comparison | Mask DSC | FA r | FA MAE | FA bias | MD r | MD MAE | MD bias |
 |---|---|---|---|---|---|---|---|
-| FSL vs. DIPY | 0.9668 | 0.8897 | 0.0504 | +0.0148 | [−0.1640, +0.1937] | 0.9012 | 0.1272 |
-| FSL vs. MRtrix3 | 0.9058 | 0.9157 | 0.0460 | +0.0139 | [−0.1419, +0.1696] | 0.9020 | 0.1271 |
-| MRtrix3 vs. DIPY | 0.9163 | 0.9966 | 0.0059 | +0.0053 | [−0.0260, +0.0366] | 0.9991 | 0.0029 |
+| FSL vs. MRtrix3 | 0.9058 | 0.9157 | 0.0460 | +0.0139 | 0.9020 | 0.1271 | -0.1271 |
+| FSL vs. DIPY | 0.9668 | 0.8897 | 0.0504 | +0.0148 | 0.9012 | 0.1272 | -0.1272 |
+| MRtrix3 vs. DIPY | 0.9163 | 0.9966 | 0.0059 | +0.0053 | 0.9991 | 0.0029 | -0.0009 |
 
-**Table 3. Non-physical tensor fits within the white matter mask.** Counts of voxels violating the definition of each metric, with the percentage of the white matter mask in parentheses.
+**Table 3. The same comparison with the estimator matched.** MRtrix3 constrained to plain weighted least squares (`dwi2tensor -iter 0`), alongside FSL `dtifit --wls` and DIPY `fit_method="WLS"`. Compare with Table 2, where MRtrix3 ran its default of two reweighting iterations.
 
-| Dataset | Metric | FSL | MRtrix3 | DIPY |
-|---|---|---|---|---|
-| Stanford (n = 65,002) | FA > 1 | 261 (0.40%) | 178 (0.27%) | 0 (0%) |
-| Stanford | MD ≤ 0 | 261 (0.40%) | 91 (0.14%) | 0 (0%) |
-| Sherbrooke (n = 111,032) | FA > 1 | 4,404 (3.97%) | 2,252 (2.03%) | 0 (0%) |
-| Sherbrooke | MD ≤ 0 | 3,016 (2.72%) | 603 (0.54%) | 0 (0%) |
+*Stanford HARDI*
+
+| Comparison | FA r | FA MAE | FA bias | MD r | MD MAE | MD bias |
+|---|---|---|---|---|---|---|
+| FSL vs. MRtrix3 | 1.0000 | 0.0000 | +0.0000 | 1.0000 | 0.0000 | +0.0000 |
+| FSL vs. DIPY | 0.9601 | 0.0228 | -0.0158 | 0.9367 | 0.0325 | -0.0322 |
+| MRtrix3 vs. DIPY | 0.9602 | 0.0228 | -0.0158 | 0.9366 | 0.0325 | -0.0322 |
+
+*Sherbrooke 3-shell*
+
+| Comparison | FA r | FA MAE | FA bias | MD r | MD MAE | MD bias |
+|---|---|---|---|---|---|---|
+| FSL vs. MRtrix3 | 1.0000 | 0.0000 | +0.0000 | 1.0000 | 0.0000 | +0.0000 |
+| FSL vs. DIPY | 0.8895 | 0.0505 | +0.0149 | 0.9013 | 0.1274 | -0.1274 |
+| MRtrix3 vs. DIPY | 0.8895 | 0.0505 | +0.0149 | 0.9012 | 0.1274 | -0.1274 |
+
+**Table 4. Manipulating the weighting scheme inside one toolkit.** The same DIPY code run twice on the same data, once with its default weights (squared signal predicted by an initial OLS fit) and once with measured-signal weights, each compared against the FSL `dtifit --wls` fit. MD in µm²/ms.
+
+| Dataset | DIPY weights | FA r | FA MAE | FA bias | MD r | MD MAE | MD bias |
+|---|---|---|---|---|---|---|---|
+| Stanford | predicted (default) | 0.9662 | 0.0222 | +0.0152 | 0.9579 | 0.0320 | +0.0317 |
+|  | measured (as FSL) | 0.9989 | 0.0003 | -0.0001 | 0.9982 | 0.0001 | +0.0001 |
+| Sherbrooke | predicted (default) | 0.9173 | 0.0468 | -0.0201 | 0.9136 | 0.1224 | +0.1224 |
+|  | measured (as FSL) | 0.9949 | 0.0035 | -0.0023 | 0.9962 | 0.0022 | +0.0022 |
+
+**Table 5. Accuracy against a known ground truth.** Synthetic phantom, SNR approximately 30. FSL `--wls`, MRtrix3 `-iter 0` and DIPY WLS are the same estimator; MRtrix3's default is listed separately. Crossing-fibre region excluded. MD in µm²/ms.
+
+*Isotropic region — true FA = 0.0000, true MD = 0.9000*
+
+| Arm | FA mean | FA bias | FA RMSE | MD mean | MD bias | MD RMSE |
+|---|---|---|---|---|---|---|
+| FSL dtifit --wls | 0.0858 | +0.0858 | 0.0900 | 0.8909 | -0.0091 | 0.0248 |
+| MRtrix3 -iter 0 (WLS) | 0.0858 | +0.0858 | 0.0900 | 0.8909 | -0.0091 | 0.0248 |
+| DIPY WLS | 0.0862 | +0.0862 | 0.0905 | 0.9046 | +0.0046 | 0.0238 |
+| MRtrix3 default (IWLS) | 0.0865 | +0.0865 | 0.0908 | 0.9046 | +0.0046 | 0.0238 |
+
+*Single Fibre region — true FA = 0.7071, true MD = 0.7000*
+
+| Arm | FA mean | FA bias | FA RMSE | MD mean | MD bias | MD RMSE |
+|---|---|---|---|---|---|---|
+| FSL dtifit --wls | 0.7050 | -0.0021 | 0.0212 | 0.6950 | -0.0050 | 0.0180 |
+| MRtrix3 -iter 0 (WLS) | 0.7050 | -0.0021 | 0.0212 | 0.6950 | -0.0050 | 0.0180 |
+| DIPY WLS | 0.7085 | +0.0014 | 0.0209 | 0.7017 | +0.0017 | 0.0174 |
+| MRtrix3 default (IWLS) | 0.7093 | +0.0022 | 0.0209 | 0.7020 | +0.0020 | 0.0175 |
+
+**Table 6. Sensitivity to denoising.** The same comparison after MP-PCA denoising applied once and given to all three toolkits. Toolkits at their default settings, as in Table 2. MD in µm²/ms.
+
+| Dataset | Comparison | FA bias raw | FA bias denoised | MD bias raw | MD bias denoised |
+|---|---|---|---|---|---|
+| Stanford | FSL vs. MRtrix3 | -0.0181 | -0.0134 | -0.0330 | -0.0186 |
+|  | FSL vs. DIPY | -0.0158 | -0.0110 | -0.0322 | -0.0178 |
+|  | MRtrix3 vs. DIPY | +0.0027 | +0.0026 | +0.0009 | +0.0009 |
+| Sherbrooke | FSL vs. MRtrix3 | +0.0139 | +0.0034 | -0.1271 | -0.0494 |
+|  | FSL vs. DIPY | +0.0148 | +0.0048 | -0.1272 | -0.0502 |
+|  | MRtrix3 vs. DIPY | +0.0053 | +0.0031 | -0.0009 | -0.0011 |
+
+**Table 7. Non-physical tensor fits within the white matter mask.** Voxels violating the definition of each metric, with percentage of the mask in parentheses, before and after denoising.
+
+| Dataset | Metric | Preprocessing | FSL | MRtrix3 | DIPY |
+|---|---|---|---|---|---|
+| Stanford | FA > 1 | none | 261 (0.40%) | 178 (0.27%) | 0 (0.00%) |
+| Stanford | MD ≤ 0 | none | 261 (0.40%) | 91 (0.14%) | 0 (0.00%) |
+| Stanford | FA > 1 | MP-PCA | 154 (0.23%) | 193 (0.29%) | 0 (0.00%) |
+| Stanford | MD ≤ 0 | MP-PCA | 105 (0.16%) | 101 (0.15%) | 0 (0.00%) |
+| Sherbrooke | FA > 1 | none | 4,404 (3.97%) | 2,252 (2.03%) | 0 (0.00%) |
+| Sherbrooke | MD ≤ 0 | none | 3,016 (2.72%) | 603 (0.54%) | 0 (0.00%) |
+| Sherbrooke | FA > 1 | MP-PCA | 2,675 (2.56%) | 2,092 (2.00%) | 0 (0.00%) |
+| Sherbrooke | MD ≤ 0 | MP-PCA | 1,330 (1.27%) | 641 (0.61%) | 0 (0.00%) |
 
 ## Figure Captions
 
-**Figure 1.** Design of the inter-tool comparison. Both datasets are open and require no credentials. *Left:* brain extraction is compared with each tool run on the input its algorithm is designed to consume — `bet` on the mean b = 0 image, `dwi2mask` on the full DWI series, `median_otsu` on the full series with the b = 0 volumes indexed — so the Dice coefficients reflect the difference a user would encounter in practice. *Right:* tensor fitting is compared with every tool given identical input: one brain mask, one volume subset comprising b = 0 and a single non-zero shell, and no preprocessing. Holding these constant isolates the fitting stage, which is what the metric comparison is intended to measure. Statistics are then restricted to physically admissible voxels, without which a few hundred failed fits dominate the correlation. Toolkit colours are consistent across Figures 1, 3 and 4. The diagram is generated by `scripts/make_fig1_design.py`.
+**Figure 1.** Design of the comparison. Both datasets are open and need no credentials. *Left:* brain extraction is compared with each tool run on the input its algorithm expects, so the Dice coefficients reflect the difference a user would meet in practice. *Right:* tensor fitting is compared with every arm given identical input — one brain mask, one volume subset of b = 0 plus a single non-zero shell, no preprocessing — and the estimator varied deliberately instead. Arms are labelled by the source of their weights: FSL `--wls` and MRtrix3 `-iter 0` weight by the measured signal, while DIPY and MRtrix3's default weight by a predicted signal. Statistics are then restricted to physically admissible voxels, without which a few hundred failed fits dominate the correlation, and every arm is checked against a phantom with known eigenvalues. Toolkit colours are consistent across Figures 1, 3 and 4. Generated by `scripts/make_fig1_design.py`.
 
-**Figure 2.** The Stage 4 (DTI Fitting) user interface, representative of all seven pipeline stages, shown on the Stanford HARDI dataset. The sidebar (left) reports the resolved dataset — detected shells and volume count — and lists the eight pipeline pages; a collapsible Tool status panel reports which toolkit binaries are present in the current environment. The main panel presents three tabs, one per toolkit (FSL `dtifit`, MRtrix3 `dwi2tensor`, DIPY `TensorModel`). The selected tab shows the exact executable command with syntax highlighting, the outputs that command will produce, a Run button that submits it via Python `subprocess` and streams stdout and stderr live, and the resulting metric maps rendered below (FSL FA and MD shown here). The collapsible Why? section, further down the page, provides biological and mathematical context and guidance on when to prefer the current toolkit.
+**Figure 2.** The environment at the tensor-fitting stage, on the Stanford HARDI dataset. The sidebar reports the resolved dataset — detected shells and volume count — and lists the pipeline pages; a collapsible panel reports which toolkit binaries are present. The main panel presents one tab per toolkit, and the selected tab shows the exact command, the outputs it will produce, a Run button that submits it via Python `subprocess` and streams output live, and the resulting maps. Commands are shown in full and with relative paths, so any of them can be copied and run outside the environment unchanged.
 
-**Figure 3.** Quantitative inter-tool DTI metric agreement, shown for the Stanford HARDI dataset (the equivalent panel for Sherbrooke 3-shell is provided as Supplementary Figure S1; both are generated by the same script). **(a)** FA maps (central axial slice) from FSL `dtifit`, MRtrix3 `tensor2metric`, and DIPY `TensorModel`, applied to identical input volumes with one shared brain mask. **(b)** Voxelwise FA scatter plots for each cross-tool pair over white matter voxels (FA > 0.2 in all three tools) with Pearson r, mean absolute error, and identity line. **(c)** Bland–Altman plots for each cross-tool pair showing the distribution of voxelwise FA differences against their mean; horizontal lines indicate the mean difference (bias) and ±1.96 SD limits of agreement. The MRtrix3–DIPY pair is tightly clustered about the identity line, whereas both FSL pairings show systematic bias and markedly wider scatter. Voxels with physically inadmissible values are excluded, as described in Methods.
+**Figure 3.** Agreement between toolkits at their default settings, on the Stanford HARDI dataset; the Sherbrooke equivalent is Supplementary Figure S1. **(a)** FA maps from FSL `dtifit`, MRtrix3 `tensor2metric` and DIPY `TensorModel`, applied to identical input with one shared brain mask. **(b)** Voxelwise FA scatter for each pair over white matter voxels (FA > 0.2 in all three), with Pearson r, mean absolute error and identity line. **(c)** Bland–Altman plots showing voxelwise FA differences against their mean; horizontal lines mark the mean difference and ±1.96 SD. The MRtrix3–DIPY pair clusters tightly about the identity line while both FSL pairings show systematic offset — a pattern that Table 3 shows to follow the estimator rather than the toolkit. Voxels with physically inadmissible values are excluded.
 
-**Figure 4.** Brain extraction comparison on the Stanford HARDI dataset (the Sherbrooke equivalent is provided as Supplementary Figure S2). The b = 0 mean image (greyscale) with brain mask overlaid in red, produced by FSL `bet` (left, 203,984 voxels), MRtrix3 `dwi2mask` (centre, 167,950 voxels), and DIPY `median_otsu` (right, 187,948 voxels) from the same input volume. Dice similarity coefficients for each pair are reported in Table 2. Two differences are visible: the extent of cortical boundary coverage, and the treatment of the lateral ventricles, which DIPY `median_otsu` excludes while FSL `bet` and MRtrix3 `dwi2mask` retain. These reflect the distinct tissue models employed by each algorithm.
+**Figure 4.** Brain extraction on the Stanford HARDI dataset; the Sherbrooke equivalent is Supplementary Figure S2. The b = 0 mean image in greyscale with the brain mask overlaid in red, from FSL `bet` (left, 203,984 voxels), MRtrix3 `dwi2mask` (centre, 167,950) and DIPY `median_otsu` (right, 187,948). Dice coefficients are in Table 2. Two differences are visible: the extent of cortical boundary coverage, and the treatment of the lateral ventricles, which `median_otsu` excludes and the other two retain.
 
 **Supplementary Figure S1.** As Figure 3, for the Sherbrooke 3-shell dataset (b = 0 + b = 1000 s/mm² subset).
 

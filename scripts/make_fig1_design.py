@@ -61,9 +61,9 @@ def arrow(ax, p0, p1, *, color=INK, lw=1.0, ls="-", z=4):
 
 def main():
     FIG_DIR.mkdir(exist_ok=True)
-    fig, ax = plt.subplots(figsize=(10.5, 8.4))
+    fig, ax = plt.subplots(figsize=(10.5, 9.0))
     ax.set_xlim(0, 10.5)
-    ax.set_ylim(0, 8.4)
+    ax.set_ylim(-0.75, 8.4)
     ax.axis("off")
 
     # ── Input ────────────────────────────────────────────────────────────────
@@ -99,33 +99,37 @@ def main():
     text(ax, 2.6, 3.72, "Dice similarity coefficient\nbetween each pair",
          size=8)
     arrow(ax, (2.6, 3.42), (2.6, 3.09))
-    text(ax, 2.6, 2.91, "Table 3  ·  Figure 4", size=8.5, weight="bold")
+    text(ax, 2.6, 2.91, "Table 2  ·  Figure 4", size=8.5, weight="bold")
 
     # ── Right branch: tensor fitting ─────────────────────────────────────────
     text(ax, 7.6, 6.88, "Tensor fitting compared", size=9, weight="bold")
-    text(ax, 7.6, 6.62, "every tool given identical input",
+    text(ax, 7.6, 6.62, "identical input; estimator varied deliberately",
          size=7.4, style="italic", color=SHARED)
 
-    box(ax, 5.55, 5.72, 4.1, 0.78, ec=SHARED, lw=1.5)
-    text(ax, 7.6, 6.30, "held identical across all three tools",
+    box(ax, 5.45, 5.72, 4.3, 0.78, ec=SHARED, lw=1.5)
+    text(ax, 7.6, 6.30, "held identical across every arm",
          size=7.6, weight="bold", color=SHARED)
     text(ax, 7.6, 6.05,
          "one brain mask (median_otsu)  ·  one volume subset\n"
          "b = 0 + a single non-zero shell  ·  no preprocessing",
          size=7.4)
 
-    for i, (tool, cmd) in enumerate([("FSL", "dtifit"),
-                                     ("MRtrix3", "dwi2tensor"),
-                                     ("DIPY", "TensorModel")]):
-        x = 5.55 + i * 1.42
-        arrow(ax, (7.6, 5.72), (x + 0.55, 5.28), color=C[tool])
-        box(ax, x, 4.72, 1.1, 0.56, ec=C[tool], lw=1.4)
-        text(ax, x + 0.55, 5.08, tool, size=7.4, weight="bold", color=C[tool])
-        text(ax, x + 0.55, 4.88, cmd, size=7.2, mono=True)
-        arrow(ax, (x + 0.55, 4.72), (7.6, 4.34), color=C[tool])
+    arms = [("FSL", "dtifit --wls", "measured"),
+            ("MRtrix3", "dwi2tensor", "predicted"),
+            ("MRtrix3", "-iter 0", "measured"),
+            ("DIPY", "TensorModel", "predicted")]
+    for i, (tool, cmd, fam) in enumerate(arms):
+        x = 5.45 + i * 1.08
+        arrow(ax, (7.6, 5.72), (x + 0.45, 5.34), color=C[tool], lw=0.9)
+        box(ax, x, 4.72, 0.9, 0.62, ec=C[tool], lw=1.4)
+        text(ax, x + 0.45, 5.16, tool, size=6.6, weight="bold", color=C[tool])
+        text(ax, x + 0.45, 4.99, cmd, size=6.0, mono=True)
+        text(ax, x + 0.45, 4.82, fam, size=5.8, style="italic",
+             color=SHARED if fam == "measured" else RULE)
+        arrow(ax, (x + 0.45, 4.72), (7.6, 4.34), color=C[tool], lw=0.9)
 
-    box(ax, 5.9, 3.78, 3.4, 0.54)
-    text(ax, 7.6, 4.05, "FA and MD maps, one set per tool", size=8)
+    box(ax, 5.7, 3.78, 3.8, 0.54)
+    text(ax, 7.6, 4.05, "FA and MD maps, one set per arm", size=8)
     arrow(ax, (7.6, 3.78), (7.6, 3.42))
 
     box(ax, 5.55, 2.82, 4.1, 0.6, ec=SHARED, lw=1.2, ls=(0, (4, 2)))
@@ -139,13 +143,17 @@ def main():
     text(ax, 7.6, 2.30, "Pearson r  ·  Spearman ρ  ·  MAE", size=8)
     text(ax, 7.6, 2.03, "Bland–Altman bias and 95% limits", size=8)
     arrow(ax, (7.6, 1.80), (7.6, 1.44))
-    text(ax, 7.6, 1.26, "Tables 3 and 4  ·  Figure 3", size=8.5,
+    text(ax, 7.6, 1.26, "Tables 2-4, 6, 7  ·  Figure 3", size=8.5,
          weight="bold")
+    box(ax, 5.7, 0.28, 3.8, 0.52, ec=RULE, lw=1.0, ls=(0, (3, 2)))
+    text(ax, 7.6, 0.66, "validated against a phantom with known eigenvalues",
+         size=7.0, style="italic", color=RULE)
+    text(ax, 7.6, 0.44, "Table 5", size=7.4, weight="bold", color=RULE)
 
     # ── Execution environment ────────────────────────────────────────────────
-    ax.plot([0.35, 10.15], [0.82, 0.82], color=RULE, lw=0.8,
+    ax.plot([0.35, 10.15], [-0.12, -0.12], color=RULE, lw=0.8,
             ls=(0, (5, 3)), zorder=1)
-    text(ax, 5.25, 0.55,
+    text(ax, 5.25, -0.42,
          "All steps run inside one container: FSL 6.0.7  ·  MRtrix3 3.0.4  "
          "·  DIPY  —  nothing installed on the host",
          size=8, color=RULE)
