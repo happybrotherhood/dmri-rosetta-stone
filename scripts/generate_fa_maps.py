@@ -43,6 +43,7 @@ import nibabel as nib
 
 ROOT = Path(__file__).parent.parent
 MRTRIX_ITER = None   # set from --mrtrix-iter
+FSL_WLS = True       # cleared by --fsl-ols
 
 
 def data_dir(subject: str) -> Path:
@@ -269,18 +270,27 @@ def gen_fsl(inp: dict, dti: Path, mask: Path) -> bool:
         print("FSL: dtifit not on PATH — skipping (use Docker for FSL)")
         return False
     print("FSL: generating fsl_dti_FA.nii.gz")
-    return run(["dtifit",
+    cmd = ["dtifit",
                 "--data=" + str(inp["data"]),
                 "--mask=" + str(mask),
                 "--bvecs=" + str(inp["bvecs"]),
                 "--bvals=" + str(inp["bvals"]),
                 "--out=" + str(dti / "fsl_dti"),
-                "--wls", "--save_tensor"], "dtifit")
+                "--save_tensor"]
+    # dtifit performs ordinary least squares unless --wls is given. Both are
+    # reported: --wls to match the other toolkits' estimator, the default
+    # because it is what most FSL users actually run.
+    if FSL_WLS:
+        cmd.append("--wls")
+    return run(cmd, "dtifit")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--subject", default="stanford")
+    ap.add_argument("--fsl-ols", action="store_true",
+                    help="run FSL dtifit at its default (ordinary least "
+                         "squares) instead of --wls")
     ap.add_argument("--mrtrix-iter", type=int, default=None,
                     help="iterations of IWLS reweighting for MRtrix3 dwi2tensor. "
                          "Pass 0 for plain WLS, matching FSL --wls and DIPY WLS. "
@@ -294,13 +304,16 @@ def main():
                          "for multi-shell data so that all three toolkits "
                          "receive identical input.")
     args = ap.parse_args()
-    global MRTRIX_ITER
+    global MRTRIX_ITER, FSL_WLS
     MRTRIX_ITER = args.mrtrix_iter
+    FSL_WLS = not args.fsl_ols
 
     dd = data_dir(args.subject)
     sub_dir = "dti_denoised" if args.denoise else "dti"
     if args.mrtrix_iter is not None:
         sub_dir += f"_iter{args.mrtrix_iter}"
+    if args.fsl_ols:
+        sub_dir += "_fslols"
     dti = ROOT / "data" / "hcp" / args.subject / sub_dir
     dti.mkdir(parents=True, exist_ok=True)
 

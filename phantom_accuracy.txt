@@ -10,6 +10,7 @@ ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms
   MRtrix3 -iter 0 (WLS)        0.0858   +0.0858   0.0900    0.8909   -0.0091   0.0248
   DIPY WLS                     0.0862   +0.0862   0.0905    0.9046   +0.0046   0.0238
   MRtrix3 default (IWLS)       0.0865   +0.0865   0.0908    0.9046   +0.0046   0.0238
+  FSL default (OLS)            0.0865   +0.0865   0.0908    0.9046   +0.0046   0.0238
 
 SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms
   arm                         FA mean   FA bias  FA RMSE   MD mean   MD bias  MD RMSE
@@ -17,3 +18,4 @@ SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms
   MRtrix3 -iter 0 (WLS)        0.7050   -0.0021   0.0212    0.6950   -0.0050   0.0180
   DIPY WLS                     0.7085   +0.0014   0.0209    0.7017   +0.0017   0.0174
   MRtrix3 default (IWLS)       0.7093   +0.0022   0.0209    0.7020   +0.0020   0.0175
+  FSL default (OLS)            0.7099   +0.0028   0.0235    0.7021   +0.0021   0.0176

@@ -57,10 +57,11 @@ TRUTH = {
 }
 
 ARMS = [
-    ("FSL dtifit --wls",        "dti_iter0", "fsl_dti"),
-    ("MRtrix3 -iter 0 (WLS)",   "dti_iter0", "mrt"),
-    ("DIPY WLS",                "dti_iter0", "dipy"),
-    ("MRtrix3 default (IWLS)",  "dti",       "mrt"),
+    ("FSL dtifit --wls",        "dti_iter0",        "fsl_dti"),
+    ("MRtrix3 -iter 0 (WLS)",   "dti_iter0",        "mrt"),
+    ("DIPY WLS",                "dti_iter0",        "dipy"),
+    ("MRtrix3 default (IWLS)",  "dti",              "mrt"),
+    ("FSL default (OLS)",       "dti_iter0_fslols", "fsl_dti"),
 ]
 
 

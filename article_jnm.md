@@ -8,15 +8,15 @@
 
 ## Abstract
 
-**Background.** Differences between diffusion MRI toolkits are commonly attributed to the software. Which component is responsible is rarely established.
+**Background.** Differences between diffusion MRI toolkits are commonly attributed to the software, without establishing which component is responsible.
 
-**New method.** We compared tensor fits from FSL, MRtrix3 and DIPY on two open datasets, holding every input constant: the same volumes and gradient tables, one brain mask, one single-shell subset, no preprocessing. We then varied the estimator rather than the toolkit, validating each arm against a phantom with known eigenvalues.
+**New method.** We compared tensor fits from FSL, MRtrix3 and DIPY on two open datasets, holding every input constant, then varied the estimator rather than the toolkit and validated each arm against a phantom with known eigenvalues.
 
-**Results.** At each toolkit's default the three appeared to disagree, FSL diverging from the other two. This was an artefact of unmatched estimators: MRtrix3 defaults to two iterations of reweighted least squares, not the plain weighted least squares used elsewhere. Matched to plain WLS, FSL and MRtrix3 agree exactly (r = 1.0000, MAE 0.0000). DIPY differs because it takes its weights from the signal predicted by an initial OLS fit rather than the measured signal; supplying measured-signal weights cuts its disagreement with FSL from 0.0222 to 0.0003 FA units on one dataset, 0.0468 to 0.0035 on the other. Against ground truth every arm recovers FA to within 0.002, so neither weighting is wrong.
+**Results.** At each toolkit's default the three appeared to disagree. This was an artefact of unmatched estimators: MRtrix3 iterates its reweighting twice by default and FSL performs ordinary least squares unless asked otherwise. Matched to plain weighted least squares, FSL and MRtrix3 agree exactly (r = 1.0000, mean absolute error 0.0000). DIPY differs because it weights by a predicted rather than a measured signal; supplying measured-signal weights cuts its disagreement with FSL from 0.0222 to 0.0003 FA units on one dataset, 0.0468 to 0.0035 on the other. Switching FSL between its own default and `--wls` changed FA by 0.0176 and 0.0505, more than replacing FSL with another toolkit. Against phantom ground truth every arm recovers FA to within 0.003, so no estimator is inaccurate.
 
 **Comparison with existing methods.** Earlier work measures variability across whole pipelines and reports it as software-dependent. Isolating the fit and manipulating the estimator shows the dependence is on the weighting scheme and on defaults, not the implementation.
 
-**Conclusions.** Implementations of the same estimator agree to numerical precision. What differs is the estimator each toolkit applies by default, which is not visible from the command a user runs. Reporting the toolkit is insufficient; the estimator and its settings should be reported.
+**Conclusions.** Implementations of the same estimator agree to numerical precision. What differs is the estimator each applies by default, which the command a user runs does not reveal. Reporting the toolkit is insufficient; the estimator and its settings should be reported.
 
 **Keywords:** diffusion MRI; tensor fitting; weighted least squares; reproducibility; benchmarking; software defaults
 
@@ -35,6 +35,8 @@ Such studies leave a narrower question open: when the *only* thing that differs 
 We built a containerised environment in which all three toolkits run on byte-identical data, used it to run the controlled comparison, and then followed the difference to its source. The instrument and the measurement are reported together because neither is much use alone.
 
 Four questions are addressed. First, how far do FSL, MRtrix3 and DIPY agree on fractional anisotropy and mean diffusivity given identical input? Second, are the toolkits in fact running the same estimator, or does each apply a different one by default? Third, if the estimator is matched, does the disagreement persist? Fourth, when the toolkits disagree, is any of them wrong — a question that requires a ground truth the real data cannot supply.
+
+Each of the estimator choices we identify is documented by the project that made it. MRtrix3 states that `dwi2tensor` iterates its reweighting twice; DIPY cites Chung et al. (2006) for its weighting; FSL's `--wls` flag is described in its own help text. What is not documented anywhere is the consequence: that these choices, rather than the implementations, account for the differences the field attributes to software; that they can be removed by a single argument; and that none of the estimators involved is inaccurate. Reading three manuals establishes that the components differ. It does not establish which difference matters, by how much, or whether any of them is wrong — and those are the questions a researcher choosing a toolkit actually faces.
 
 We report the comparison on two open datasets acquired at different sites under different protocols, on a synthetic phantom whose generating eigenvalues are known, and under a direct manipulation of the weighting scheme. Every value can be regenerated from openly available data.
 
@@ -181,9 +183,19 @@ We tested this directly rather than resting on the correspondence. DIPY accepts 
 
 Changing one argument inside a single toolkit removes almost all of the difference previously attributed to the choice between toolkits.
 
+### The same toolkit disagrees with itself more than with another
+
+FSL `dtifit` performs ordinary least squares unless `--wls` is passed. The comparison so far used `--wls`, to match the estimator the other toolkits apply; the default is what most users run. Fitting the same data both ways places the size of the between-toolkit differences in context (Table 6).
+
+Within FSL, switching between its default and `--wls` changed FA by a mean absolute 0.0176 on Stanford and 0.0505 on Sherbrooke. Between FSL `--wls` and MRtrix3 `-iter 0` — different software, different language, different developers — the mean absolute difference was 0.0000 on both.
+
+One flag inside one program therefore produced a larger difference than replacing the program entirely. The same holds against DIPY: FSL's default sits 0.0191 and 0.0182 FA units from DIPY's WLS on the two datasets, comparable to the between-scheme gap already reported, but reached without changing toolkit at all.
+
+On the phantom FSL's default recovers the truth about as well as the other arms, with FA bias +0.0028 against +0.0014 to +0.0022 for the weighted fits and a slightly higher RMSE of 0.0235 against 0.0209 to 0.0212 (Table 7). Ordinary least squares is a defensible estimator and is not being called incorrect here; the point is that it is a different one, selected by default, and that the choice is not recorded anywhere a reader of the methods section would see it.
+
 ### Neither weighting is wrong
 
-That two estimators disagree does not establish that either is inaccurate. On the synthetic phantom, where the eigenvalues generating the signal are known exactly, all four arms recover them closely (Table 5). In the single-fibre region, against a true FA of 0.7071 and true MD of 0.7000 µm²/ms, the measured-signal arms returned FA biased by −0.0021 and MD by −0.0050, and the predicted-signal arms FA by +0.0014 to +0.0022 and MD by +0.0017 to +0.0020. Root-mean-square errors were 0.021 for FA and 0.018 for MD in every arm.
+That two estimators disagree does not establish that either is inaccurate. On the synthetic phantom, where the eigenvalues generating the signal are known exactly, all four arms recover them closely (Table 6). In the single-fibre region, against a true FA of 0.7071 and true MD of 0.7000 µm²/ms, the measured-signal arms returned FA biased by −0.0021 and MD by −0.0050, and the predicted-signal arms FA by +0.0014 to +0.0022 and MD by +0.0017 to +0.0020. Root-mean-square errors were 0.021 for FA and 0.018 for MD in every arm.
 
 The two families therefore bracket the truth, one slightly low and one slightly high, and the gap between them on clean data is about 0.004 FA units. On real data the same two families differ by 0.015 to 0.020 FA units, four to five times more. The estimators are not inaccurate; they respond differently to what real data contains and the phantom does not.
 
@@ -191,7 +203,7 @@ In the isotropic region, where the true FA is zero, every arm returned approxima
 
 ### Sensitivity to denoising
 
-If the difference between weighting schemes is driven by noise, denoising should reduce it. MP-PCA denoising was applied once with MRtrix3 `dwidenoise` and the denoised series given to all three toolkits, leaving the estimator as the only variable (Table 6).
+If the difference between weighting schemes is driven by noise, denoising should reduce it. MP-PCA denoising was applied once with MRtrix3 `dwidenoise` and the denoised series given to all three toolkits, leaving the estimator as the only variable (Table 7).
 
 The differences shrink substantially but do not close. The FSL-to-MRtrix3-default MD offset fell from 0.033 to 0.019 µm²/ms on Stanford and from 0.127 to 0.049 on Sherbrooke, reductions of 44% and 61%. The FA offset fell correspondingly, and its sign still reversed between the two datasets, from −0.013 on Stanford to +0.003 on Sherbrooke. Agreement within the predicted-signal family was unaffected (MRtrix3 default against DIPY, r = 0.9990 before and after).
 
@@ -199,7 +211,7 @@ Roughly half of the between-family difference on real data is therefore attribut
 
 ### Non-physical tensor fits
 
-Unconstrained linear fitting can return negative eigenvalues, which produce fractional anisotropy above one and mean diffusivity below zero. Counts differ markedly between arms (Table 7). DIPY returned no such voxel in any run — two datasets, with and without denoising. FSL and MRtrix3 both returned them: on unprocessed data, 0.40% and 0.27% of white matter voxels on Stanford, and 3.97% and 2.03% on Sherbrooke.
+Unconstrained linear fitting can return negative eigenvalues, which produce fractional anisotropy above one and mean diffusivity below zero. Counts differ markedly between arms (Table 8). DIPY returned no such voxel in any run — two datasets, with and without denoising. FSL and MRtrix3 both returned them: on unprocessed data, 0.40% and 0.27% of white matter voxels on Stanford, and 3.97% and 2.03% on Sherbrooke.
 
 Which of the two produces more is not stable. On unprocessed data FSL produced more than MRtrix3 in both datasets, but after denoising the order reversed on Stanford, MRtrix3 rising slightly to 0.29% while FSL fell to 0.23%. The robust statement is the one that held throughout: DIPY produced none, and the other two produced them at a rate that depends on both the acquisition and the preprocessing.
 
@@ -221,7 +233,9 @@ Disagreements concentrate at the cortical boundary and, distinctively, at the la
 
 The result that organises the others is that FSL and MRtrix3, given the same estimator, return the same tensor to numerical precision. Two independent implementations — different languages, different groups, different decades — agree at r = 1.0000 with a mean voxelwise difference of about 10⁻⁴ FA units. Implementation quality is not the variable.
 
-What varies is which estimator each toolkit applies when the user does not specify one. MRtrix3 ships two iterations of reweighted least squares; FSL performs a single weighted fit when asked for `--wls` and ordinary least squares otherwise; DIPY performs a single weighted fit but derives the weights differently, from a preliminary OLS prediction rather than from the measured signal. None of this appears in the command a user types. `dwi2tensor dwi.mif tensor.mif` and `dtifit --wls ...` look like the same operation described in two dialects, which is how the field generally treats them, and they are not.
+What varies is which estimator each toolkit applies when the user does not specify one. MRtrix3 ships two iterations of reweighted least squares; FSL performs ordinary least squares unless `--wls` is passed; DIPY performs a single weighted fit but derives the weights from a preliminary OLS prediction rather than from the measured signal. None of this appears in the command a user types. `dwi2tensor dwi.mif tensor.mif` and `dtifit -k data -o out ...` look like the same operation described in two dialects, which is how the field generally treats them, and they are not.
+
+The comparison within FSL makes the size of this plain. Changing one flag in one program moved FA by 0.0176 and 0.0505 mean absolute units on the two datasets, while replacing that program with MRtrix3 at a matched estimator moved it by 0.0000. Whatever "software-related variability" denotes, it is not a property of the software.
 
 This reframes what "software-related variability" means in dMRI. Reported differences between toolkits are real, and our first analysis reproduced them, but they are not differences between codebases. They are differences between statistical estimators that happen to be bundled as defaults. The distinction matters because the two have different remedies: a codebase difference would require the developers to act, whereas an estimator difference can be removed by the analyst, in our case with a single command-line argument.
 
@@ -343,12 +357,13 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 
 **Table 1. Tensor-fitting configurations compared.** The first three rows are each toolkit as a user would normally invoke it; the fourth places MRtrix3 on the same estimator as the other two. Weighting scheme as documented by each project.
 
-| Arm | Command | Weights derived from | Iterations |
-|---|---|---|---|
-| FSL | `dtifit --wls` | measured signal | 1 |
-| MRtrix3, default | `dwi2tensor` | predicted signal | 2 |
-| DIPY | `TensorModel(fit_method="WLS")` | predicted signal (initial OLS fit) | 1 |
-| MRtrix3, matched | `dwi2tensor -iter 0` | measured signal | 1 |
+| Arm | Command | Estimator | Weights derived from | Is it the default? |
+|---|---|---|---|---|
+| FSL, default | `dtifit` | OLS | unweighted | yes |
+| FSL, weighted | `dtifit --wls` | WLS | measured signal | no |
+| MRtrix3, default | `dwi2tensor` | WLS + 2 IWLS | predicted signal | yes |
+| MRtrix3, matched | `dwi2tensor -iter 0` | WLS | measured signal | no |
+| DIPY | `TensorModel(fit_method="WLS")` | WLS | predicted signal, from an initial OLS fit | yes |
 
 **Table 2. Toolkits at their default settings.** Agreement over white matter voxels (FA > 0.2 in all three), with every input held identical. Pearson r, mean absolute error (MAE) and Bland-Altman mean bias. MD in µm²/ms. Statistics use only physically admissible voxels (FA in [0, 1]; 0 < MD ≤ 3.0 × 10⁻³ mm²/s). Mask DSC compares each pair of brain extractions, each tool run on the input its algorithm expects.
 
@@ -395,7 +410,18 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 | Sherbrooke | predicted (default) | 0.9173 | 0.0468 | -0.0201 | 0.9136 | 0.1224 | +0.1224 |
 |  | measured (as FSL) | 0.9949 | 0.0035 | -0.0023 | 0.9962 | 0.0022 | +0.0022 |
 
-**Table 5. Accuracy against a known ground truth.** Synthetic phantom, SNR approximately 30. FSL `--wls`, MRtrix3 `-iter 0` and DIPY WLS are the same estimator; MRtrix3's default is listed separately. Crossing-fibre region excluded. MD in µm²/ms.
+**Table 5. The same toolkit against itself.** FSL `dtifit` at its default (ordinary least squares) compared with FSL `--wls`, and with the matched-estimator fits from the other toolkits. White matter voxels admissible in every arm.
+
+| Dataset | Comparison | FA r | FA MAE | FA bias |
+|---|---|---|---|---|
+| Stanford | FSL `--wls` vs. FSL default (OLS) | 0.9649 | 0.0176 | +0.0016 |
+|  | FSL `--wls` vs. MRtrix3 `-iter 0` | 1.0000 | 0.0000 | −0.0000 |
+|  | FSL default (OLS) vs. DIPY WLS | 0.9921 | 0.0191 | −0.0171 |
+| Sherbrooke | FSL `--wls` vs. FSL default (OLS) | 0.9069 | 0.0505 | +0.0166 |
+|  | FSL `--wls` vs. MRtrix3 `-iter 0` | 1.0000 | 0.0000 | +0.0000 |
+|  | FSL default (OLS) vs. DIPY WLS | 0.9884 | 0.0182 | +0.0013 |
+
+**Table 6. Accuracy against a known ground truth.** Synthetic phantom, SNR approximately 30. FSL `--wls`, MRtrix3 `-iter 0` and DIPY WLS are the same estimator; MRtrix3's default and FSL's default are listed separately. Crossing-fibre region excluded. MD in µm²/ms.
 
 *Isotropic region — true FA = 0.0000, true MD = 0.9000*
 
@@ -405,6 +431,7 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 | MRtrix3 -iter 0 (WLS) | 0.0858 | +0.0858 | 0.0900 | 0.8909 | -0.0091 | 0.0248 |
 | DIPY WLS | 0.0862 | +0.0862 | 0.0905 | 0.9046 | +0.0046 | 0.0238 |
 | MRtrix3 default (IWLS) | 0.0865 | +0.0865 | 0.0908 | 0.9046 | +0.0046 | 0.0238 |
+| FSL default (OLS) | 0.0865 | +0.0865 | 0.0908 | 0.9046 | +0.0046 | 0.0238 |
 
 *Single Fibre region — true FA = 0.7071, true MD = 0.7000*
 
@@ -414,8 +441,9 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 | MRtrix3 -iter 0 (WLS) | 0.7050 | -0.0021 | 0.0212 | 0.6950 | -0.0050 | 0.0180 |
 | DIPY WLS | 0.7085 | +0.0014 | 0.0209 | 0.7017 | +0.0017 | 0.0174 |
 | MRtrix3 default (IWLS) | 0.7093 | +0.0022 | 0.0209 | 0.7020 | +0.0020 | 0.0175 |
+| FSL default (OLS) | 0.7099 | +0.0028 | 0.0235 | 0.7021 | +0.0021 | 0.0176 |
 
-**Table 6. Sensitivity to denoising.** The same comparison after MP-PCA denoising applied once and given to all three toolkits. Toolkits at their default settings, as in Table 2. MD in µm²/ms.
+**Table 7. Sensitivity to denoising.** The same comparison after MP-PCA denoising applied once and given to all three toolkits. Toolkits at their default settings, as in Table 2. MD in µm²/ms.
 
 | Dataset | Comparison | FA bias raw | FA bias denoised | MD bias raw | MD bias denoised |
 |---|---|---|---|---|---|
@@ -426,7 +454,7 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 |  | FSL vs. DIPY | +0.0148 | +0.0048 | -0.1272 | -0.0502 |
 |  | MRtrix3 vs. DIPY | +0.0053 | +0.0031 | -0.0009 | -0.0011 |
 
-**Table 7. Non-physical tensor fits within the white matter mask.** Voxels violating the definition of each metric, with percentage of the mask in parentheses, before and after denoising.
+**Table 8. Non-physical tensor fits within the white matter mask.** Voxels violating the definition of each metric, with percentage of the mask in parentheses, before and after denoising.
 
 | Dataset | Metric | Preprocessing | FSL | MRtrix3 | DIPY |
 |---|---|---|---|---|---|
