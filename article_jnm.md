@@ -6,8 +6,6 @@
 
 \* **Corresponding author.** Busra Mutlu, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: [KCL EMAIL]
 
----
-
 ## Abstract
 
 **Background.** Diffusion MRI is analysed with three packages — FSL, MRtrix3 and DIPY — which the field assumes produce interchangeable tensor metrics. The assumption is rarely tested under controlled conditions.
@@ -21,8 +19,6 @@
 **Conclusions.** Two toolkits are interchangeable; the third is not, and its offset cannot be corrected by a scaling factor because its sign depends on the acquisition. Leaving non-physical voxels in place drops an apparent diffusivity correlation from 0.997 to 0.118, a trap for anyone computing agreement on raw tensor maps.
 
 **Keywords:** diffusion MRI; tensor fitting; software comparison; reproducibility; benchmarking; FSL; MRtrix3
-
----
 
 ## Introduction
 
@@ -41,8 +37,6 @@ We addressed this by building a containerised environment in which all three too
 Three questions are addressed. First, how far do FSL, MRtrix3 and DIPY agree on fractional anisotropy and mean diffusivity when given byte-identical input? Second, does any disagreement behave like a fixed bias, which could be corrected, or does it vary with the acquisition? Third, how often does each toolkit return values that are physically impossible, and what does that do to the agreement statistics normally used to answer the first question?
 
 We report the comparison on two open datasets acquired at different sites under different protocols, so that the findings are replicated rather than observed once. Both are distributed without credentials, and every reported value can be regenerated with four commands.
-
----
 
 ## Materials and Methods
 
@@ -80,8 +74,6 @@ python scripts/compute_fa_comparison.py --subject stanford
 python scripts/generate_fa_maps.py      --subject sherbrooke --shell 1000
 python scripts/compute_fa_comparison.py --subject sherbrooke
 ```
-
----
 
 ### The execution environment
 
@@ -135,8 +127,6 @@ A dedicated Reference section provides: (1) a DTI metrics guide with the biologi
 | **Bundled toolkits** | FSL 6.0.7, MRtrix3 3.0.4, DIPY ≥ 1.7 |
 | **Licence** | MIT |
 | **Restrictions for non-academic use** | None imposed by this project. Note, however, that the bundled FSL is distributed under the FSL Licence, which restricts commercial use; users intending commercial deployment must obtain a licence from Oxford University Innovation. MRtrix3 (MPL 2.0) and DIPY (BSD 3-clause) carry no such restriction. |
-
----
 
 ## Results
 
@@ -213,8 +203,6 @@ Figure 2 shows the interface at the tensor-fitting stage. Each stage presents on
 
 Runtimes are indicative rather than benchmarked, observed on one machine (macOS 14, Apple Silicon, 16 GB RAM; Docker Desktop with 8 GB allocated) on which the `linux/amd64` image runs under emulation; a native x86-64 host should be faster. Every stage of the comparison completes in a few minutes on the full 160-volume Stanford acquisition. The exception is eddy-current correction, which takes 35-45 minutes on a single core, but this falls outside the comparison reported here, which applies no preprocessing.
 
----
-
 ## Discussion
 
 ### Methodological Transparency and Reproducibility
@@ -275,49 +263,33 @@ Finally, the platform has not yet been evaluated in a formal user study; a struc
 
 Planned developments include: (i) cloud deployment (e.g., Binder or Google Colab) to support GPU-accelerated tractography without local Docker installation; (ii) extension to advanced modules including fixel-based analysis, NODDI modelling, and automated tract segmentation; (iii) support for real multi-subject datasets from OpenNeuro; and (iv) a structured workshop pilot with pre/post knowledge assessment.
 
----
-
 ## Conclusion
 
 dMRI Rosetta Stone is an open-source, containerised, interactive platform that enables side-by-side comparison, execution, and visual inspection of the complete dMRI preprocessing and analysis pipeline across FSL, MRtrix3, and DIPY. By running real human brain data through all three toolkits in a unified browser interface, the platform makes cross-tool translation immediately accessible to students and researchers at all levels of experience. The application addresses a genuine and previously unmet gap in the neuroimaging training landscape, and is designed to accelerate dMRI education while promoting the methodological transparency that reproducible neuroimaging science requires.
-
----
 
 ## CRediT authorship contribution statement
 
 **Busra Mutlu:** Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation, Visualization, Writing - original draft, Writing - review and editing.
 
----
-
 ## Declaration of competing interest
 
 The author declares that she has no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-
----
 
 ## Funding
 
 [TO COMPLETE: name the funder and grant number, or state that this research received no specific grant from funding agencies in the public, commercial, or not-for-profit sectors.]
 
----
-
 ## Declaration of generative AI and AI-assisted technologies in the writing process
 
 [TO COMPLETE OR DELETE — see the note accompanying this manuscript. If generative AI was used to assist with drafting or editing, Elsevier requires a statement here naming the tool and describing its use, and confirming that the author reviewed and edited the output and takes full responsibility for the content of the publication.]
-
----
 
 ## Data availability
 
 The complete source code, Dockerfile, and documentation are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under an MIT licence. The exact version reported here is archived on Zenodo as v1.0.0, doi:10.5281/zenodo.22106455; the concept DOI doi:10.5281/zenodo.22106454 always resolves to the most recent version. Both datasets analysed — Stanford HARDI and Sherbrooke 3-shell — are distributed openly by the DIPY project at https://dipy.org and are retrieved automatically by `scripts/fetch_sample_data.py`. No registration or credentials are required to reproduce any result presented here, and the four commands that regenerate every reported value are given at the end of the Materials and Methods.
 
----
-
 ## Acknowledgements
 
 [TO COMPLETE OR DELETE: supervisors, colleagues, computing resources.]
-
----
 
 ## References
 
@@ -369,8 +341,6 @@ Van Essen DC, Smith SM, Barch DM, Behrens TEJ, Yacoub E, Ugurbil K, et al. (2013
 
 Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2016) Denoising of diffusion MRI using random matrix theory. *NeuroImage* 142, 394–406. doi: 10.1016/j.neuroimage.2016.08.016
 
----
-
 ## Tables
 
 **Table 1. Pipeline stage coverage across FSL, MRtrix3, and DIPY in dMRI Rosetta Stone.** Dashes indicate the toolkit does not provide a dedicated implementation for that operation.
@@ -411,8 +381,6 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 | Stanford | MD ≤ 0 | 261 (0.40%) | 91 (0.14%) | 0 (0%) |
 | Sherbrooke (n = 111,032) | FA > 1 | 4,404 (3.97%) | 2,252 (2.03%) | 0 (0%) |
 | Sherbrooke | MD ≤ 0 | 3,016 (2.72%) | 603 (0.54%) | 0 (0%) |
-
----
 
 ## Figure Captions
 
