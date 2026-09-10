@@ -1,4 +1,4 @@
-# What actually differs between diffusion MRI toolkits: the estimator, not the software
+# Diffusion MRI toolkits still disagree on how to weight a tensor fit, a decade after the question was settled
 
 **Busra Mutlu**¹\*
 
@@ -8,17 +8,17 @@
 
 ## Abstract
 
-**Background.** Differences between diffusion MRI toolkits are commonly attributed to the software, without asking which component is responsible.
+**Background.** Veraart et al. (2013) showed that weighting a linear tensor fit by the measured signal degrades accuracy, and that weights from a predicted signal perform better. Whether the major toolkits apply that result has not been examined.
 
-**New method.** We compared tensor fits from FSL, MRtrix3 and DIPY on two open datasets with every input held constant, then varied the estimator rather than the toolkit, and validated each arm against a phantom with known eigenvalues.
+**New method.** We compared tensor fits from FSL, MRtrix3 and DIPY on two open datasets with every input held constant, varied the estimator rather than the toolkit, and measured accuracy against phantoms at SNR 30, 20 and 10.
 
-**Results.** At each toolkit's default the three appeared to disagree — an artefact of unmatched estimators, since MRtrix3 iterates its reweighting twice and FSL performs ordinary least squares unless asked otherwise. Matched to plain weighted least squares, FSL and MRtrix3 agree exactly (r = 1.0000, mean absolute error 0.0000). DIPY differs because it weights by a predicted rather than a measured signal; supplying measured-signal weights cuts its disagreement with FSL from 0.0222 to 0.0003 FA units and 0.0468 to 0.0035. Switching FSL between its own default and `--wls` changed FA by more than replacing FSL with another toolkit, by 0.12 to 0.26 standard deviations of white matter FA. Five estimators across three toolkits sat apart from the measured-signal weighted fit. Against phantom ground truth every arm recovered FA to within 0.003, so none is inaccurate.
+**Results.** The toolkits do not agree, and none of it is visible in the command a user runs: MRtrix3 applies the recommended multi-step weighting by default and DIPY a two-pass equivalent, while FSL performs ordinary least squares unless asked otherwise and its `--wls` uses the scheme advised against. Implementation is not the variable — FSL `--wls` and MRtrix3 on the same estimator agree exactly (r = 1.0000, MAE 0.0000). At SNR 30 the two weighting families differ negligibly; at SNR 10 the measured-signal family underestimates FA by 0.0177 and the predicted-signal family overestimates it by 0.0111. On real data the difference reached 0.26 standard deviations of white matter FA, more than replacing one toolkit with another.
 
-**Comparison with existing methods.** Earlier work measures variability across pipelines and reports it as software-dependent. Isolating the fit and manipulating the estimator shows the dependence is on the weighting scheme and defaults, not the implementation.
+**Comparison with existing methods.** Earlier work reports pipeline variability as software-dependent. Attributing it to the estimator and to differing defaults locates it precisely and makes it correctable.
 
-**Conclusions.** Implementations of the same estimator agree to numerical precision. What differs is the estimator each applies by default, which the command a user runs does not reveal. Reporting the toolkit is insufficient; the estimator and its settings should be reported.
+**Conclusions.** The estimation question has an answer in the literature; the toolkits have not converged on it. Users cannot see which scheme they apply, and at routine SNR the choice is not negligible. Methods sections should report the estimator and its settings, not only the toolkit.
 
-**Keywords:** diffusion MRI; tensor fitting; weighted least squares; reproducibility; benchmarking; software defaults
+**Keywords:** diffusion MRI; tensor fitting; weighted least squares; estimator accuracy; reproducibility; software defaults
 
 ## Introduction
 
@@ -36,7 +36,9 @@ We built a containerised environment in which all three toolkits run on byte-ide
 
 Four questions are addressed. First, how far do FSL, MRtrix3 and DIPY agree on fractional anisotropy and mean diffusivity given identical input? Second, are the toolkits in fact running the same estimator, or does each apply a different one by default? Third, if the estimator is matched, does the disagreement persist? Fourth, when the toolkits disagree, is any of them wrong — a question that requires a ground truth the real data cannot supply.
 
-Each of the estimator choices we identify is documented by the project that made it. MRtrix3 states that `dwi2tensor` iterates its reweighting twice; DIPY cites Chung et al. (2006) for its weighting; FSL's `--wls` flag is described in its own help text. What is not documented anywhere is the consequence: that these choices, rather than the implementations, account for the differences the field attributes to software; that they can be removed by a single argument; and that none of the estimators involved is inaccurate. Reading three manuals establishes that the components differ. It does not establish which difference matters, by how much, or whether any of them is wrong — and those are the questions a researcher choosing a toolkit actually faces.
+The estimation question itself is not open. Veraart et al. (2013) compared weighting a linear tensor fit by the squares of the measured diffusion-weighted signals against weighting by the squares of a predicted signal reconstructed from an earlier parameter estimate. They found the negative effect of the former on accuracy to be, in their words, surprisingly high, and reported that multi-step weighting performed better and in some cases outperformed non-linear least squares. Koay et al. (2006) had earlier set out the general framework for least-squares estimation in DTI.
+
+What has not been examined is whether the toolkits the field actually uses apply that result. Each of the choices we identify is documented by the project that made it: MRtrix3 states that `dwi2tensor` iterates its reweighting twice, DIPY cites Chung et al. (2006) for its weights, and FSL's `--wls` flag appears in its own help text. Reading three manuals establishes that the components differ. It does not establish which toolkit implements the recommendation, what the difference costs at the signal-to-noise ratios of routine acquisition, or how it compares with the effect of changing toolkit — and those are the questions facing someone choosing how to fit a tensor.
 
 We report the comparison on two open datasets acquired at different sites under different protocols, on a synthetic phantom whose generating eigenvalues are known, and under a direct manipulation of the weighting scheme. Every value can be regenerated from openly available data.
 
@@ -87,7 +89,7 @@ MRtrix3 documents its first stage as weighting by the empirical signal intensiti
 
 ### Accuracy against a known ground truth
 
-Agreement between toolkits cannot say whether any of them is accurate. We therefore fitted a synthetic phantom whose generating eigenvalues are known: an isotropic region with eigenvalues 0.9, 0.9, 0.9 × 10⁻³ mm²/s (FA = 0, MD = 0.90 µm²/ms) and a single-fibre region with 1.4, 0.35, 0.35 × 10⁻³ mm²/s (FA = 0.7071, MD = 0.70 µm²/ms), at an SNR of approximately 30. A crossing-fibre region is present in the phantom but excluded from scoring, since no single tensor is correct there by construction. Voxels within two of a region boundary were also excluded, as they mix tissue types. Bias and root-mean-square error against truth are reported for each arm.
+Agreement between toolkits cannot say whether any of them is accurate. We therefore fitted synthetic phantoms whose generating eigenvalues are known, at three noise levels. A single noise level would not settle the question: the theoretical objection to measured-signal weighting is that the weights are correlated with the noise they are meant to downweight, so any difference should be small at high SNR and grow as SNR falls. Phantoms were generated at SNR 30, 20 and 10 at b = 0, spanning from a favourable acquisition to one typical of high b-value shells. Each phantom contains: an isotropic region with eigenvalues 0.9, 0.9, 0.9 × 10⁻³ mm²/s (FA = 0, MD = 0.90 µm²/ms) and a single-fibre region with 1.4, 0.35, 0.35 × 10⁻³ mm²/s (FA = 0.7071, MD = 0.70 µm²/ms), A crossing-fibre region is present in the phantom but excluded from scoring, since no single tensor is correct there by construction. Voxels within two of a region boundary were also excluded, as they mix tissue types. Bias and root-mean-square error against truth are reported for each arm.
 
 ### Sensitivity to preprocessing
 
@@ -207,13 +209,17 @@ Absolute differences in fractional anisotropy are hard to weigh without a scale.
 
 The within-FSL comparison is the clearest case: changing one flag moved FA by 0.12 standard deviations on Stanford and 0.26 on Sherbrooke. A shift of a quarter of a standard deviation, produced by a command-line argument that is not recorded in any methods section we are aware of, is of the same order as effects that dMRI studies are designed to detect between groups.
 
-### Neither weighting is wrong
+### Accuracy depends on signal-to-noise ratio
 
-That two estimators disagree does not establish that either is inaccurate. On the synthetic phantom, where the eigenvalues generating the signal are known exactly, all four arms recover them closely (Table 7). In the single-fibre region, against a true FA of 0.7071 and true MD of 0.7000 µm²/ms, the measured-signal arms returned FA biased by −0.0021 and MD by −0.0050, and the predicted-signal arms FA by +0.0014 to +0.0022 and MD by +0.0017 to +0.0020. Root-mean-square errors were 0.021 for FA and 0.018 for MD in every arm.
+That two estimators disagree does not by itself say either is inaccurate, and the question is settled only against a known truth. We fitted synthetic phantoms at three noise levels, since the theoretical objection to measured-signal weighting is that the weights are correlated with the noise they are meant to downweight, an effect that should grow as SNR falls (Table 7).
 
-The two families therefore bracket the truth, one slightly low and one slightly high, and the gap between them on clean data is about 0.004 FA units. On real data the same two families differ by 0.015 to 0.020 FA units, four to five times more. The estimators are not inaccurate; they respond differently to what real data contains and the phantom does not.
+At SNR 30 the two families are close to the truth and to each other. Against a true FA of 0.7071 the measured-signal arms were biased by −0.0021 and the predicted-signal arms by +0.0014 to +0.0022, with root-mean-square errors of 0.021 in every arm. Read alone, this would suggest the choice does not matter.
 
-In the isotropic region, where the true FA is zero, every arm returned approximately 0.086. This is the familiar noise floor of anisotropy estimates and is not a toolkit property; it appeared identically in all four.
+It does at lower SNR. At SNR 20 the measured-signal bias grew to −0.0048 and at SNR 10 to −0.0177, against +0.0111 for DIPY's two-pass scheme and +0.0182 for MRtrix3's default. The mean diffusivity bias separated more sharply: −0.0408 µm²/ms for measured-signal weighting against +0.0172 for DIPY, a factor of 2.4. Root-mean-square error was higher for measured-signal weighting at every noise level tested.
+
+The direction is consistent: measured-signal weighting underestimates both metrics and predicted-signal weighting overestimates them, with the former deviating further as noise increases. This reproduces, for the specific configurations these toolkits ship, the result Veraart et al. (2013) established in simulation.
+
+It also explains a pattern in the real data. Differences between the families were roughly twice as large on Sherbrooke as on Stanford throughout, and Sherbrooke is the noisier acquisition — a single b = 0 volume against Stanford's ten, and shells extending to b = 3500.
 
 ### Sensitivity to denoising
 
@@ -255,13 +261,13 @@ Expressed on a scale that can be weighed, those shifts are 0.12 and 0.26 standar
 
 This reframes what "software-related variability" means in dMRI. Reported differences between toolkits are real, and our first analysis reproduced them, but they are not differences between codebases. They are differences between statistical estimators that happen to be bundled as defaults. The distinction matters because the two have different remedies: a codebase difference would require the developers to act, whereas an estimator difference can be removed by the analyst, in our case with a single command-line argument.
 
-### Neither scheme is wrong, and that is the useful part
+### The literature has an answer; the toolkits have not adopted it
 
-The phantom shows that both weighting schemes recover known eigenvalues, one marginally low and one marginally high, with the gap between them about 0.004 FA units on clean data. Neither can be called incorrect, and we do not recommend one over the other.
+Veraart et al. (2013) reported that weighting by the measured signal degrades accuracy and that multi-step weighting performs better. Our phantoms reproduce this for the configurations these toolkits ship, and locate where it matters: at SNR 30 the choice is close to irrelevant, while at SNR 10 the measured-signal scheme carries roughly twice the mean diffusivity bias and a higher root-mean-square error.
 
-That makes the finding more awkward for practice rather than less. If one scheme were wrong it could be deprecated. Because both are defensible, both will persist, and studies analysed in different toolkits will continue to differ by an amount that is small within a study and not small across studies. On real data the gap grows to 0.015-0.020 FA units, four to five times the phantom value, and denoising removes only about half of it. The remainder reflects properties of real data — noise structure, artefacts, partial volume — that the two schemes weight differently.
+A decade later the toolkits have not converged. MRtrix3 applies multi-step reweighting by default, and DIPY the two-pass scheme of Chung et al. (2006), so both follow the recommendation without the user needing to know it exists. FSL performs ordinary least squares by default, and its `--wls` option implements the single-pass measured-signal weighting that Veraart et al. specifically caution against. A user who reads that `--wls` enables weighted least squares, and reasonably concludes this is the more principled option, gets the scheme the literature advises against.
 
-For a single study processed consistently the practical exposure is limited: every subject is displaced in the same direction. The exposure is in pooling. Normative reference ranges, multi-site studies, and meta-analyses of absolute diffusivity all combine values whose estimator is usually unstated and, in our reading of methods sections, usually unknown to the authors.
+We are not proposing a new estimator or contradicting the existing recommendation. The contribution is to show that the recommendation has not reached the defaults, that the resulting differences are of a size that matters at realistic SNR, and that a user cannot see which scheme they are applying from the command they run.
 
 ### The reporting problem
 
@@ -291,7 +297,7 @@ Adding datasets is cheap by design — one fetcher entry and two commands — an
 
 Given identical input, FSL and MRtrix3 constrained to the same estimator return the same diffusion tensor to numerical precision. The differences reported between diffusion MRI toolkits are not differences between implementations. They are differences between statistical estimators, distributed as defaults that the user's command does not reveal: MRtrix3 iterates its reweighting twice, DIPY derives its weights from a predicted rather than a measured signal, and FSL performs ordinary least squares unless asked otherwise.
 
-Neither weighting scheme is wrong. Both recover known eigenvalues on a phantom to within 0.002 FA units, bracketing the truth from either side. On real data they diverge by four to five times that amount, about half of which denoising removes, and the residual difference is small within a study but not across studies.
+Which estimator to prefer is not an open question. Veraart et al. (2013) showed that measured-signal weighting degrades accuracy and that multi-step weighting performs better, and our phantoms reproduce this for the shipped configurations: negligible at SNR 30, but at SNR 10 the measured-signal scheme carries roughly twice the mean diffusivity bias. A decade on, MRtrix3 and DIPY follow the recommendation by default while FSL's weighted option does not, and nothing in the interface tells the user which they have.
 
 The practical consequence is a reporting one. Recording the toolkit and version does not describe what was computed; recording the estimator and its settings does, and costs one line. Our own first pass through this comparison concluded that one toolkit was aberrant, on evidence that turned out to reflect an unmatched default — which is the clearest argument we can offer for making that line standard.
 
@@ -333,6 +339,8 @@ Bhagwat N, Barry A, Dickie EW, Brown ST, Devenyi GA, Hatano K, et al. (2021) Und
 
 Catani M and Thiebaut de Schotten M (2008) A diffusion tensor imaging tractography atlas for virtual in vivo dissections. *Cortex* 44, 1105–1132. doi: 10.1016/j.cortex.2008.05.004
 
+Chung S, Lu Y, and Henry RG (2006) Comparison of bootstrap approaches for estimation of uncertainties of DTI parameters. *NeuroImage* 33, 531–541. doi: 10.1016/j.neuroimage.2006.07.001
+
 Garyfallidis E, Brett M, Amirbekian B, Rokem A, Van Der Walt S, Descoteaux M, et al. (2014) Dipy, a library for the analysis of diffusion MRI data. *Frontiers in Neuroinformatics* 8, 8. doi: 10.3389/fninf.2014.00008
 
 Glasser MF, Sotiropoulos SN, Wilson JA, Coalson TS, Fischl B, Andersson JL, et al. (2013) The minimal preprocessing pipelines for the Human Connectome Project. *NeuroImage* 80, 105–124. doi: 10.1016/j.neuroimage.2013.04.127
@@ -344,6 +352,8 @@ Jenkinson M, Beckmann CF, Behrens TEJ, Woolrich MW, and Smith SM (2012) FSL. *Ne
 Jeurissen B, Tournier JD, Dhollander T, Connelly A, and Sijbers J (2014) Multi-tissue constrained spherical deconvolution for improved analysis of multi-shell diffusion MRI data. *NeuroImage* 103, 411–426. doi: 10.1016/j.neuroimage.2014.07.061
 
 Jones DK (ed.) (2010) *Diffusion MRI: Theory, Methods, and Applications*. Oxford: Oxford University Press.
+
+Koay CG, Chang LC, Carew JD, Pierpaoli C, and Basser PJ (2006) A unifying theoretical and algorithmic framework for least squares methods of estimation in diffusion tensor imaging. *Journal of Magnetic Resonance* 182, 115–125. doi: 10.1016/j.jmr.2006.06.020
 
 Merkel D (2014) Docker: Lightweight Linux containers for consistent development and deployment. *Linux Journal* 2014, 2.
 
@@ -366,6 +376,8 @@ Tournier JD, Calamante F, and Connelly A (2010) Improved probabilistic streamlin
 Tournier JD, Smith RE, Raffelt D, Tabbara R, Dhollander T, Pietsch M, et al. (2019) MRtrix3: A fast, flexible and open software framework for medical image processing and visualisation. *NeuroImage* 202, 116137. doi: 10.1016/j.neuroimage.2019.116137
 
 Van Essen DC, Smith SM, Barch DM, Behrens TEJ, Yacoub E, Ugurbil K, et al. (2013) The WU-Minn Human Connectome Project: An overview. *NeuroImage* 80, 62–79. doi: 10.1016/j.neuroimage.2013.05.041
+
+Veraart J, Sijbers J, Sunaert S, Leemans A, and Jeurissen B (2013) Weighted linear least squares estimation of diffusion MRI parameters: strengths, limitations, and pitfalls. *NeuroImage* 81, 335–346. doi: 10.1016/j.neuroimage.2013.05.028
 
 Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2016) Denoising of diffusion MRI using random matrix theory. *NeuroImage* 142, 394–406. doi: 10.1016/j.neuroimage.2016.08.016
 
@@ -452,27 +464,22 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 |  | DIPY NLLS | 0.9386 | 0.0376 | +0.0178 | 0.19 |
 |  | DIPY RESTORE | 0.9344 | 0.0392 | +0.0165 | 0.20 |
 
-**Table 7. Accuracy against a known ground truth.** Synthetic phantom, SNR approximately 30. FSL `--wls`, MRtrix3 `-iter 0` and DIPY WLS are the same estimator; MRtrix3's default and FSL's default are listed separately. Crossing-fibre region excluded. MD in µm²/ms.
+**Table 7. Accuracy against a known ground truth, as a function of noise.** Synthetic phantom, single-fibre region, true FA = 0.7071 and true MD = 0.7000 µm²/ms. Arms are grouped by the source of their weights. The theoretical objection to measured-signal weighting is that the weights are correlated with the noise, so the difference between families is expected to grow as SNR falls (Veraart et al., 2013).
 
-*Isotropic region — true FA = 0.0000, true MD = 0.9000*
-
-| Arm | FA mean | FA bias | FA RMSE | MD mean | MD bias | MD RMSE |
+| SNR | Arm | Weights | FA bias | FA RMSE | MD bias | MD RMSE |
 |---|---|---|---|---|---|---|
-| FSL dtifit --wls | 0.0858 | +0.0858 | 0.0900 | 0.8909 | -0.0091 | 0.0248 |
-| MRtrix3 -iter 0 (WLS) | 0.0858 | +0.0858 | 0.0900 | 0.8909 | -0.0091 | 0.0248 |
-| DIPY WLS | 0.0862 | +0.0862 | 0.0905 | 0.9046 | +0.0046 | 0.0238 |
-| MRtrix3 default (IWLS) | 0.0865 | +0.0865 | 0.0908 | 0.9046 | +0.0046 | 0.0238 |
-| FSL default (OLS) | 0.0865 | +0.0865 | 0.0908 | 0.9046 | +0.0046 | 0.0238 |
-
-*Single Fibre region — true FA = 0.7071, true MD = 0.7000*
-
-| Arm | FA mean | FA bias | FA RMSE | MD mean | MD bias | MD RMSE |
-|---|---|---|---|---|---|---|
-| FSL dtifit --wls | 0.7050 | -0.0021 | 0.0212 | 0.6950 | -0.0050 | 0.0180 |
-| MRtrix3 -iter 0 (WLS) | 0.7050 | -0.0021 | 0.0212 | 0.6950 | -0.0050 | 0.0180 |
-| DIPY WLS | 0.7085 | +0.0014 | 0.0209 | 0.7017 | +0.0017 | 0.0174 |
-| MRtrix3 default (IWLS) | 0.7093 | +0.0022 | 0.0209 | 0.7020 | +0.0020 | 0.0175 |
-| FSL default (OLS) | 0.7099 | +0.0028 | 0.0235 | 0.7021 | +0.0021 | 0.0176 |
+| 30 | FSL --wls | measured | -0.0021 | 0.0212 | -0.0050 | 0.0180 |
+|  | MRtrix3 -iter 0 | measured | -0.0021 | 0.0212 | -0.0050 | 0.0180 |
+|  | DIPY WLS | predicted | +0.0014 | 0.0209 | +0.0017 | 0.0174 |
+|  | MRtrix3 default (IWLS) | predicted | +0.0022 | 0.0209 | +0.0020 | 0.0175 |
+| 20 | FSL --wls | measured | -0.0048 | 0.0322 | -0.0110 | 0.0281 |
+|  | MRtrix3 -iter 0 | measured | -0.0048 | 0.0322 | -0.0110 | 0.0281 |
+|  | DIPY WLS | predicted | +0.0030 | 0.0312 | +0.0039 | 0.0265 |
+|  | MRtrix3 default (IWLS) | predicted | +0.0048 | 0.0314 | +0.0047 | 0.0267 |
+| 10 | FSL --wls | measured | -0.0177 | 0.0682 | -0.0408 | 0.0653 |
+|  | MRtrix3 -iter 0 | measured | -0.0177 | 0.0682 | -0.0408 | 0.0653 |
+|  | DIPY WLS | predicted | +0.0111 | 0.0623 | +0.0172 | 0.0575 |
+|  | MRtrix3 default (IWLS) | predicted | +0.0182 | 0.0637 | +0.0215 | 0.0598 |
 
 **Table 8. Sensitivity to denoising.** The same comparison after MP-PCA denoising applied once and given to all three toolkits. Toolkits at their default settings, as in Table 2. MD in µm²/ms.
 

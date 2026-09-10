@@ -102,7 +102,8 @@ def two_fibre_signal(bvals, bvecs, evals, dir1, dir2,
 
 def build_phantom(shape=(30, 30, 30),
                   bvals: np.ndarray = None,
-                  bvecs: np.ndarray = None) -> np.ndarray:
+                  bvecs: np.ndarray = None,
+                  snr: float = 30.0) -> np.ndarray:
     """
     Four-region phantom:
       z < 10           : isotropic (CSF-like, FA ≈ 0)
@@ -122,7 +123,7 @@ def build_phantom(shape=(30, 30, 30),
     dir_si = np.array([0., 0., 1.])
 
     rng = np.random.default_rng(7)
-    noise_sigma = 1000 / 30   # SNR ≈ 30 at b=0
+    noise_sigma = 1000 / snr   # noise level set by the requested SNR at b=0
 
     # Pre-compute signals for each region (constant across voxels in region)
     sig_csf      = tensor_signal(bvals, bvecs, evals_iso, evecs_from_direction(dir_lr), S0=800)
@@ -162,7 +163,8 @@ def build_mask(shape=(30, 30, 30)) -> np.ndarray:
 # Main
 # ---------------------------------------------------------------------------
 
-def generate(subject: str, outdir: Path, n_per_shell: int = 30):
+def generate(subject: str, outdir: Path, n_per_shell: int = 30,
+             snr: float = 30.0):
     print(f'Generating synthetic HCP-like data for subject {subject} ...')
 
     bvals, bvecs = make_gradient_table(n_per_shell)
@@ -179,12 +181,12 @@ def generate(subject: str, outdir: Path, n_per_shell: int = 30):
     # Build DWI phantom
     print('  Building phantom (30×30×30) ... ', end='', flush=True)
     mask = build_mask()
-    vol  = build_phantom(bvals=bvals, bvecs=bvecs)
+    vol  = build_phantom(bvals=bvals, bvecs=bvecs, snr=snr)
 
     # Replace background voxels with pure thermal noise (no tissue signal).
     # Real scanners have noise everywhere, but no tissue signal outside the head.
     # This makes background_std ≈ noise_sigma, so SNR = brain_mean / noise_sigma ≈ 30.
-    noise_sigma = 1000.0 / 30.0
+    noise_sigma = 1000.0 / snr
     rng_bg  = np.random.default_rng(99)
     bg_bool = ~mask.astype(bool)           # uint8 ~mask does bitwise NOT (wrong); cast first
     n_bg    = bg_bool.sum()
@@ -248,5 +250,9 @@ if __name__ == '__main__':
     parser.add_argument('--subject',     default='100307')
     parser.add_argument('--outdir',      default='./data/hcp')
     parser.add_argument('--n_per_shell', type=int, default=30)
+    parser.add_argument('--snr', type=float, default=30.0,
+                        help='SNR at b=0. Low SNR is the regime in which the '
+                             'choice of weighting scheme is expected to affect '
+                             'accuracy (Veraart et al., 2013).')
     args = parser.parse_args()
-    generate(args.subject, Path(args.outdir), args.n_per_shell)
+    generate(args.subject, Path(args.outdir), args.n_per_shell, snr=args.snr)
