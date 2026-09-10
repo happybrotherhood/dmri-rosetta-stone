@@ -90,7 +90,13 @@ def style_tables(path: Path, *, font="Times New Roman", size=10.0) -> int:
         return e
 
     doc = Document(path)
+    styled = 0
     for table in doc.tables:
+        # Single-cell tables are call-out boxes, not data tables. Ruling them
+        # and bolding their first row would wreck the design.
+        if len(table.rows) == 1 and len(table.columns) == 1:
+            continue
+        styled += 1
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
         tblPr = table._tbl.tblPr
 
@@ -134,7 +140,7 @@ def style_tables(path: Path, *, font="Times New Roman", size=10.0) -> int:
                         if r == 0:
                             run.font.bold = True
     doc.save(path)
-    return len(doc.tables)
+    return styled
 
 
 def polish(path: Path) -> None:
