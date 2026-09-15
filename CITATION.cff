@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: >-
-  dMRI Rosetta Stone: An Open-Source Interactive Platform for
-  Cross-Tool Diffusion MRI Education and Reproducibility
+  dMRI Rosetta Stone: a controlled comparison of diffusion tensor
+  estimators across FSL, MRtrix3 and DIPY
 message: >-
   If you use this software, please cite it using the metadata
   from this file.
@@ -12,19 +12,19 @@ authors:
     affiliation: King's College London
 repository-code: 'https://github.com/happybrotherhood/dmri-rosetta-stone'
 abstract: >-
-  An open-source, containerised platform that presents the same
-  diffusion MRI operation in FSL, MRtrix3, and DIPY side by side,
-  executable on real open human brain data. Covers seven canonical
-  pipeline stages from brain extraction through tractography and
-  voxelwise group analysis. Ships with a reproducible benchmark of
-  inter-tool agreement across two independent open datasets.
+  A container that runs FSL, MRtrix3 and DIPY on byte-identical diffusion
+  MRI data, with the scripts that compare their tensor fits. Shows that FSL
+  --wls and MRtrix3 -iter 0 return matching tensors, that the toolkits
+  differ mainly in the estimator they apply by default, and that
+  measured-signal weighting is the most biased scheme in anisotropic
+  tissue (Rician-noise phantoms and simulations on the real gradient
+  tables).
 keywords:
   - diffusion MRI
+  - diffusion tensor
+  - weighted least squares
   - FSL
   - MRtrix3
   - DIPY
-  - educational software
-  - neuroinformatics
   - reproducibility
-  - open science
 license: MIT

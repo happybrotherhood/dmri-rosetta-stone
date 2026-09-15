@@ -1,21 +1,53 @@
-Accuracy against a known ground truth (synthetic phantom)
-========================================================================
-Estimators matched: FSL --wls, MRtrix3 -iter 0 and DIPY WLS are the
-same algorithm. MRtrix3's default is listed separately.
+Accuracy against a known ground truth (synthetic phantom, Rician noise)
+================================================================================================
+Fitted input: 10 b=0 + 30 directions at b=1000. SNR is that of one b=0 volume.
+Bias is estimate minus truth; SE is its standard error across voxels.
 Crossing-fibre region excluded: no single tensor is correct there.
 
-ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms
-  arm                         FA mean   FA bias  FA RMSE   MD mean   MD bias  MD RMSE
-  FSL dtifit --wls             0.0858   +0.0858   0.0900    0.8909   -0.0091   0.0248
-  MRtrix3 -iter 0 (WLS)        0.0858   +0.0858   0.0900    0.8909   -0.0091   0.0248
-  DIPY WLS                     0.0862   +0.0862   0.0905    0.9046   +0.0046   0.0238
-  MRtrix3 default (IWLS)       0.0865   +0.0865   0.0908    0.9046   +0.0046   0.0238
-  FSL default (OLS)            0.0865   +0.0865   0.0908    0.9046   +0.0046   0.0238
+SNR 30  ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      +0.0856  0.0004   0.0898   -0.0135  0.0003   0.0260
+  MRtrix3 -iter 0          measured      +0.0856  0.0004   0.0898   -0.0135  0.0003   0.0260
+  DIPY WLS                 predicted     +0.0860  0.0004   0.0902   -0.0000  0.0003   0.0226
+  MRtrix3 default (IWLS)   predicted     +0.0863  0.0004   0.0905   +0.0000  0.0003   0.0226
+  FSL default (OLS)        unweighted    +0.0862  0.0004   0.0904   -0.0000  0.0003   0.0226
 
-SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms
-  arm                         FA mean   FA bias  FA RMSE   MD mean   MD bias  MD RMSE
-  FSL dtifit --wls             0.7050   -0.0021   0.0212    0.6950   -0.0050   0.0180
-  MRtrix3 -iter 0 (WLS)        0.7050   -0.0021   0.0212    0.6950   -0.0050   0.0180
-  DIPY WLS                     0.7085   +0.0014   0.0209    0.7017   +0.0017   0.0174
-  MRtrix3 default (IWLS)       0.7093   +0.0022   0.0209    0.7020   +0.0020   0.0175
-  FSL default (OLS)            0.7099   +0.0028   0.0235    0.7021   +0.0021   0.0176
+SNR 30  SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      -0.0039  0.0003   0.0212   -0.0065  0.0002   0.0182
+  MRtrix3 -iter 0          measured      -0.0039  0.0003   0.0212   -0.0065  0.0002   0.0182
+  DIPY WLS                 predicted     -0.0005  0.0003   0.0206   +0.0001  0.0002   0.0171
+  MRtrix3 default (IWLS)   predicted     +0.0003  0.0003   0.0206   +0.0004  0.0002   0.0171
+  FSL default (OLS)        unweighted    +0.0003  0.0003   0.0232   +0.0004  0.0002   0.0173
+
+SNR 20  ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      +0.1275  0.0005   0.1338   -0.0296  0.0005   0.0444
+  MRtrix3 -iter 0          measured      +0.1275  0.0005   0.1338   -0.0296  0.0005   0.0444
+  DIPY WLS                 predicted     +0.1288  0.0006   0.1350   -0.0000  0.0005   0.0341
+  MRtrix3 default (IWLS)   predicted     +0.1297  0.0006   0.1360   +0.0000  0.0005   0.0341
+  FSL default (OLS)        unweighted    +0.1296  0.0006   0.1359   +0.0000  0.0005   0.0341
+
+SNR 20  SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      -0.0081  0.0004   0.0325   -0.0147  0.0003   0.0292
+  MRtrix3 -iter 0          measured      -0.0081  0.0004   0.0325   -0.0147  0.0003   0.0292
+  DIPY WLS                 predicted     -0.0007  0.0004   0.0309   -0.0001  0.0003   0.0256
+  MRtrix3 default (IWLS)   predicted     +0.0010  0.0004   0.0309   +0.0007  0.0003   0.0257
+  FSL default (OLS)        unweighted    +0.0013  0.0005   0.0348   +0.0007  0.0004   0.0260
+
+SNR 10  ISOTROPIC   true FA = 0.0000, true MD = 0.9000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      +0.2485  0.0010   0.2602   -0.1042  0.0009   0.1217
+  MRtrix3 -iter 0          measured      +0.2485  0.0010   0.2602   -0.1042  0.0009   0.1217
+  DIPY WLS                 predicted     +0.2535  0.0011   0.2652   -0.0012  0.0010   0.0701
+  MRtrix3 default (IWLS)   predicted     +0.2587  0.0011   0.2705   -0.0005  0.0010   0.0703
+  FSL default (OLS)        unweighted    +0.2622  0.0011   0.2752   -0.0001  0.0010   0.0706
+
+SNR 10  SINGLE FIBRE   true FA = 0.7071, true MD = 0.7000 um^2/ms   (n = 5,408 voxels)
+  arm                      weights       FA bias      SE  FA RMSE   MD bias      SE  MD RMSE
+  FSL dtifit --wls         measured      -0.0257  0.0009   0.0703   -0.0542  0.0007   0.0728
+  MRtrix3 -iter 0          measured      -0.0257  0.0009   0.0703   -0.0542  0.0007   0.0728
+  DIPY WLS                 predicted     -0.0014  0.0008   0.0614   -0.0022  0.0007   0.0516
+  MRtrix3 default (IWLS)   predicted     +0.0046  0.0008   0.0614   +0.0006  0.0007   0.0521
+  FSL default (OLS)        unweighted    +0.0068  0.0009   0.0694   +0.0011  0.0007   0.0530

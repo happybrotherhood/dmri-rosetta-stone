@@ -1,0 +1,7 @@
+Signal-to-noise ratio of the real datasets (white matter, FA > 0.2)
+========================================================================
+Noise sigma: median of the MRtrix3 dwidenoise MP-PCA noise map.
+
+  dataset      b0 vols  shell DW vols    sigma   SNR b0  SNR shell
+  stanford          10   2000     150     18.1     32.1        9.5
+  sherbrooke         1   1000      64     21.9     10.8        5.9

@@ -103,7 +103,8 @@ def two_fibre_signal(bvals, bvecs, evals, dir1, dir2,
 def build_phantom(shape=(30, 30, 30),
                   bvals: np.ndarray = None,
                   bvecs: np.ndarray = None,
-                  snr: float = 30.0) -> np.ndarray:
+                  snr: float = 30.0,
+                  noise: str = "rician") -> np.ndarray:
     """
     Four-region phantom:
       z < 10           : isotropic (CSF-like, FA ≈ 0)
@@ -143,8 +144,14 @@ def build_phantom(shape=(30, 30, 30),
                 else:
                     base = sig_crossing
 
-                noise = rng.normal(0, noise_sigma, n_vols).astype(np.float32)
-                vol[x, y, z, :] = np.maximum(base + noise, 0)
+                n1 = rng.normal(0, noise_sigma, n_vols).astype(np.float32)
+                if noise == "rician":
+                    # Magnitude images carry noise from both the real and the
+                    # imaginary channel, so the measured signal is Rician.
+                    n2 = rng.normal(0, noise_sigma, n_vols).astype(np.float32)
+                    vol[x, y, z, :] = np.sqrt((base + n1) ** 2 + n2 ** 2)
+                else:
+                    vol[x, y, z, :] = np.maximum(base + n1, 0)
 
     return vol
 
@@ -164,7 +171,7 @@ def build_mask(shape=(30, 30, 30)) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 def generate(subject: str, outdir: Path, n_per_shell: int = 30,
-             snr: float = 30.0):
+             snr: float = 30.0, noise: str = "rician"):
     print(f'Generating synthetic HCP-like data for subject {subject} ...')
 
     bvals, bvecs = make_gradient_table(n_per_shell)
@@ -181,16 +188,21 @@ def generate(subject: str, outdir: Path, n_per_shell: int = 30,
     # Build DWI phantom
     print('  Building phantom (30×30×30) ... ', end='', flush=True)
     mask = build_mask()
-    vol  = build_phantom(bvals=bvals, bvecs=bvecs, snr=snr)
+    vol  = build_phantom(bvals=bvals, bvecs=bvecs, snr=snr, noise=noise)
 
     # Replace background voxels with pure thermal noise (no tissue signal).
     # Real scanners have noise everywhere, but no tissue signal outside the head.
-    # This makes background_std ≈ noise_sigma, so SNR = brain_mean / noise_sigma ≈ 30.
+    # With Rician noise the background magnitude is Rayleigh-distributed.
     noise_sigma = 1000.0 / snr
     rng_bg  = np.random.default_rng(99)
     bg_bool = ~mask.astype(bool)           # uint8 ~mask does bitwise NOT (wrong); cast first
     n_bg    = bg_bool.sum()
-    bg_noise = np.abs(rng_bg.normal(0, noise_sigma, (n_bg, len(bvals)))).astype(np.float32)
+    bg_shape = (n_bg, len(bvals))
+    if noise == "rician":
+        bg_noise = np.hypot(rng_bg.normal(0, noise_sigma, bg_shape),
+                            rng_bg.normal(0, noise_sigma, bg_shape)).astype(np.float32)
+    else:
+        bg_noise = np.abs(rng_bg.normal(0, noise_sigma, bg_shape)).astype(np.float32)
     vol[bg_bool] = bg_noise
     print('done')
 
@@ -254,5 +266,9 @@ if __name__ == '__main__':
                         help='SNR at b=0. Low SNR is the regime in which the '
                              'choice of weighting scheme is expected to affect '
                              'accuracy (Veraart et al., 2013).')
+    parser.add_argument('--noise', choices=['rician', 'gaussian'], default='rician',
+                        help='rician: magnitude-image noise, as acquired. '
+                             'gaussian: additive noise clipped at zero.')
     args = parser.parse_args()
-    generate(args.subject, Path(args.outdir), args.n_per_shell, snr=args.snr)
+    generate(args.subject, Path(args.outdir), args.n_per_shell, snr=args.snr,
+             noise=args.noise)

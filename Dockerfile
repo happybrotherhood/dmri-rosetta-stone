@@ -2,7 +2,7 @@
 # dMRI Rosetta Stone — FSL + MRtrix3 + DIPY + Streamlit
 #
 # Base: ubuntu:22.04  (always available, no auth needed)
-# MRtrix3: copied from official mrtrix3/mrtrix3:latest image (stage 1)
+# MRtrix3: copied from the official mrtrix3/mrtrix3 image, pinned (stage 1)
 # FSL: official fslinstaller.py script
 #
 # Build:  docker build --platform linux/amd64 -t dmri-rosetta .
@@ -15,7 +15,10 @@
 ARG TARGETPLATFORM=linux/amd64
 
 # ── Stage 1: grab MRtrix3 binaries from the official image ───────────────────
-FROM mrtrix3/mrtrix3:latest AS mrtrix3_stage
+# Pinned by digest to the image that produced the published results
+# (MRtrix3 3.0.8). A floating :latest tag would change the estimator's
+# implementation under a reader who rebuilds later.
+FROM mrtrix3/mrtrix3@sha256:a06f1463923d1bb748c5bba09ca1daaf2266802a84e161ba4b28238396afe82a AS mrtrix3_stage
 
 # ── Stage 2: main image ───────────────────────────────────────────────────────
 FROM --platform=${TARGETPLATFORM} ubuntu:22.04
@@ -78,12 +81,12 @@ RUN ln -sf /usr/lib/x86_64-linux-gnu/libtiff.so.5 \
 RUN pip3 install --no-cache-dir \
         "streamlit>=1.40" \
         "nibabel>=5.0" \
-        "numpy>=1.24,<2.0" \
+        "numpy==1.26.4" \
         "scipy>=1.10" \
         "matplotlib>=3.7" \
         "pandas>=2.0" \
         "networkx>=3.0" \
-        "dipy>=1.7" \
+        "dipy==1.12.1" \
         "scikit-image>=0.20"
 
 # ── 5. App ────────────────────────────────────────────────────────────────────

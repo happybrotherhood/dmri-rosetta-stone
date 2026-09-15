@@ -1,19 +1,18 @@
 """
 make_fig1_design.py
 -------------------
-Draw Figure 1: the design of the inter-tool comparison.
+Draw Figure 1: the design of the tensor-fitting comparison.
 
-This replaces an earlier figure that diagrammed the Docker build. That
-information is one paragraph of prose and did not need a figure. What does
-need one is the comparison design, because its whole point is which inputs
-are held identical and which are deliberately left to each tool — and that is
-hard to hold in the head from text alone.
+What needs a figure is which inputs are held identical, which estimators are
+varied, and which ground truths each arm is scored against; that is hard to
+hold in the head from text alone. Brain extraction, which the paper reports
+only in the Supplementary Material, is left out.
 
 The layout follows the data-flow convention used in this literature (e.g. the
 QSIPrep and fMRIPrep workflow figures): data enters at the top, arrows carry
 it downward through processing, and the tool responsible for each step is
-named on the step. Toolkit colours match Figures 3 and 4 so the same tool is
-the same colour throughout the paper.
+named on the step. Toolkit colours match Figure 2 so the same tool is the
+same colour throughout the paper.
 
 Usage:
     python scripts/make_fig1_design.py
@@ -34,8 +33,8 @@ ROOT = Path(__file__).parent.parent
 FIG_DIR = ROOT / "figures"
 
 INK = "#1A1A1A"
-RULE = "#7A7A7A"
-SHARED = "#B00020"          # marks what is held identical across tools
+RULE = "#6E6E6E"
+SHARED = "#B00020"          # marks what is held identical, and measured weights
 C = {"FSL": "#2166AC", "MRtrix3": "#1A9850", "DIPY": "#D6604D"}
 
 MONO = {"family": "DejaVu Sans Mono"}
@@ -46,10 +45,10 @@ def box(ax, x, y, w, h, *, lw=1.0, ec=INK, fc="white", ls="-", z=2):
                            linewidth=lw, linestyle=ls, zorder=z))
 
 
-def text(ax, x, y, s, *, size=8.5, weight="normal", color=INK, ha="center",
+def text(ax, x, y, s, *, size=9, weight="normal", color=INK, ha="center",
          va="center", mono=False, style="normal", z=5):
     ax.text(x, y, s, fontsize=size, fontweight=weight, color=color, ha=ha,
-            va=va, zorder=z, linespacing=1.5, style=style,
+            va=va, zorder=z, linespacing=1.45, style=style,
             **(MONO if mono else {}))
 
 
@@ -61,102 +60,89 @@ def arrow(ax, p0, p1, *, color=INK, lw=1.0, ls="-", z=4):
 
 def main():
     FIG_DIR.mkdir(exist_ok=True)
-    fig, ax = plt.subplots(figsize=(10.5, 9.0))
-    ax.set_xlim(0, 10.5)
-    ax.set_ylim(-0.75, 8.4)
+    fig, ax = plt.subplots(figsize=(9.0, 8.6))
+    ax.set_xlim(0, 9.0)
+    ax.set_ylim(-0.85, 8.35)
     ax.axis("off")
+    cx = 4.5
 
     # ── Input ────────────────────────────────────────────────────────────────
-    box(ax, 2.55, 7.32, 5.4, 0.95, lw=1.3)
-    text(ax, 5.25, 8.06, "Open dMRI dataset  (no credentials required)",
-         size=9, weight="bold")
-    text(ax, 5.25, 7.79, "Stanford HARDI — 160 volumes, b = 2000", size=7.5)
-    text(ax, 5.25, 7.54,
-         "Sherbrooke 3-shell — 193 volumes, b = 1000 / 2000 / 3500", size=7.5)
+    box(ax, 1.25, 7.25, 6.5, 1.0, lw=1.3)
+    text(ax, cx, 8.02, "Two open dMRI datasets  (no credentials required)",
+         size=10, weight="bold")
+    text(ax, cx, 7.73, "Stanford HARDI — 10 b = 0 + 150 directions at b = 2000 s/mm²",
+         size=8.6)
+    text(ax, cx, 7.46,
+         "Sherbrooke 3-shell — fitted subset: 1 b = 0 + 64 directions at b = 1000 s/mm²",
+         size=8.6)
+    arrow(ax, (cx, 7.25), (cx, 6.95))
 
-    arrow(ax, (3.6, 7.32), (2.6, 7.05))
-    arrow(ax, (6.9, 7.32), (7.6, 7.05))
+    # ── Held identical ───────────────────────────────────────────────────────
+    box(ax, 1.55, 6.15, 5.9, 0.8, ec=SHARED, lw=1.5)
+    text(ax, cx, 6.74, "held identical across every arm", size=9,
+         weight="bold", color=SHARED)
+    text(ax, cx, 6.42,
+         "one brain mask  ·  one volume subset  ·  no preprocessing\n",
+         size=8.6)
+    text(ax, cx, 6.30, "(MP-PCA denoising tested separately, applied once for all)",
+         size=7.6, color=RULE, style="italic")
 
-    # ── Left branch: brain extraction ────────────────────────────────────────
-    text(ax, 2.6, 6.88, "Brain extraction compared", size=9, weight="bold")
-    text(ax, 2.6, 6.62, "each tool on the input it is designed for",
-         size=7.4, style="italic", color=RULE)
-
-    inputs = [("FSL", "bet", "mean b = 0"),
-              ("MRtrix3", "dwi2mask", "full DWI series"),
-              ("DIPY", "median_otsu", "full series, b = 0 idx")]
-    for i, (tool, cmd, inp) in enumerate(inputs):
-        y = 6.05 - i * 0.62
-        box(ax, 0.30, y, 4.6, 0.5, ec=C[tool], lw=1.4)
-        text(ax, 0.52, y + 0.25, tool, size=8, weight="bold", color=C[tool],
-             ha="left")
-        text(ax, 1.68, y + 0.25, cmd, size=7.8, mono=True, ha="left")
-        text(ax, 2.92, y + 0.25, f"←  {inp}", size=6.9, color=RULE,
-             ha="left")
-
-    arrow(ax, (2.6, 4.35), (2.6, 4.02))
-    box(ax, 0.95, 3.42, 3.3, 0.6)
-    text(ax, 2.6, 3.72, "Dice similarity coefficient\nbetween each pair",
-         size=8)
-    arrow(ax, (2.6, 3.42), (2.6, 3.09))
-    text(ax, 2.6, 2.91, "Table 2  ·  Figure 4", size=8.5, weight="bold")
-
-    # ── Right branch: tensor fitting ─────────────────────────────────────────
-    text(ax, 7.6, 6.88, "Tensor fitting compared", size=9, weight="bold")
-    text(ax, 7.6, 6.62, "identical input; estimator varied deliberately",
-         size=7.4, style="italic", color=SHARED)
-
-    box(ax, 5.45, 5.72, 4.3, 0.78, ec=SHARED, lw=1.5)
-    text(ax, 7.6, 6.30, "held identical across every arm",
-         size=7.6, weight="bold", color=SHARED)
-    text(ax, 7.6, 6.05,
-         "one brain mask (median_otsu)  ·  one volume subset\n"
-         "b = 0 + a single non-zero shell  ·  no preprocessing",
-         size=7.4)
-
-    arms = [("FSL", "dtifit --wls", "measured"),
-            ("MRtrix3", "dwi2tensor", "predicted"),
-            ("MRtrix3", "-iter 0", "measured"),
-            ("DIPY", "TensorModel", "predicted")]
+    # ── Arms ─────────────────────────────────────────────────────────────────
+    arms = [("FSL", "dtifit\n--wls", "measured"),
+            ("MRtrix3", "dwi2tensor\n-iter 0", "measured"),
+            ("MRtrix3", "dwi2tensor\n(default)", "predicted"),
+            ("DIPY", "WLS\n(default)", "predicted"),
+            ("FSL", "dtifit\n(default)", "unweighted"),
+            ("DIPY", "NLLS\nRESTORE", "non-linear")]
+    w, gap = 1.3, 0.14
+    x0 = cx - (len(arms) * w + (len(arms) - 1) * gap) / 2
     for i, (tool, cmd, fam) in enumerate(arms):
-        x = 5.45 + i * 1.08
-        arrow(ax, (7.6, 5.72), (x + 0.45, 5.34), color=C[tool], lw=0.9)
-        box(ax, x, 4.72, 0.9, 0.62, ec=C[tool], lw=1.4)
-        text(ax, x + 0.45, 5.16, tool, size=6.6, weight="bold", color=C[tool])
-        text(ax, x + 0.45, 4.99, cmd, size=6.0, mono=True)
-        text(ax, x + 0.45, 4.82, fam, size=5.8, style="italic",
+        x = x0 + i * (w + gap)
+        arrow(ax, (cx, 6.15), (x + w / 2, 5.62), color=C[tool], lw=0.9)
+        box(ax, x, 4.62, w, 1.0, ec=C[tool], lw=1.5)
+        text(ax, x + w / 2, 5.40, tool, size=8.8, weight="bold", color=C[tool])
+        text(ax, x + w / 2, 5.07, cmd, size=7.6, mono=True)
+        text(ax, x + w / 2, 4.76, fam, size=7.8, style="italic",
              color=SHARED if fam == "measured" else RULE)
-        arrow(ax, (x + 0.45, 4.72), (7.6, 4.34), color=C[tool], lw=0.9)
+        arrow(ax, (x + w / 2, 4.62), (cx, 4.20), color=C[tool], lw=0.9)
 
-    box(ax, 5.7, 3.78, 3.8, 0.54)
-    text(ax, 7.6, 4.05, "FA and MD maps, one set per arm", size=8)
-    arrow(ax, (7.6, 3.78), (7.6, 3.42))
+    # ── Maps, admissibility, statistics ──────────────────────────────────────
+    box(ax, 2.6, 3.66, 3.8, 0.54)
+    text(ax, cx, 3.93, "FA and MD maps, one set per arm", size=9)
+    arrow(ax, (cx, 3.66), (cx, 3.34))
 
-    box(ax, 5.55, 2.82, 4.1, 0.6, ec=SHARED, lw=1.2, ls=(0, (4, 2)))
-    text(ax, 7.6, 3.24, "physically admissible voxels only",
-         size=7.8, weight="bold", color=SHARED)
-    text(ax, 7.6, 2.99, "FA in [0, 1]      0 < MD ≤ 3.0 × 10⁻³ mm²/s",
-         size=7.4)
-    arrow(ax, (7.6, 2.82), (7.6, 2.46))
+    box(ax, 2.2, 2.66, 4.6, 0.68, ec=SHARED, lw=1.2, ls=(0, (4, 2)))
+    text(ax, cx, 3.12, "physically admissible voxels only",
+         size=9, weight="bold", color=SHARED)
+    text(ax, cx, 2.84, "FA in [0, 1]      0 < MD ≤ 3.0 × 10⁻³ mm²/s", size=8.6)
+    arrow(ax, (cx, 2.66), (cx, 2.34))
 
-    box(ax, 5.7, 1.80, 3.8, 0.66)
-    text(ax, 7.6, 2.30, "Pearson r  ·  Spearman ρ  ·  MAE", size=8)
-    text(ax, 7.6, 2.03, "Bland–Altman bias and 95% limits", size=8)
-    arrow(ax, (7.6, 1.80), (7.6, 1.44))
-    text(ax, 7.6, 1.26, "Tables 2-4, 6, 7  ·  Figure 3", size=8.5,
-         weight="bold")
-    box(ax, 5.7, 0.28, 3.8, 0.52, ec=RULE, lw=1.0, ls=(0, (3, 2)))
-    text(ax, 7.6, 0.66, "validated against a phantom with known eigenvalues",
-         size=7.0, style="italic", color=RULE)
-    text(ax, 7.6, 0.44, "Table 5", size=7.4, weight="bold", color=RULE)
+    box(ax, 2.3, 1.62, 4.4, 0.72)
+    text(ax, cx, 2.13, "Pearson r  ·  mean absolute error", size=9)
+    text(ax, cx, 1.83, "Bland–Altman bias and 95% limits", size=9)
+    arrow(ax, (cx, 1.62), (cx, 1.34))
+    text(ax, cx, 1.18, "Tables 2–5, 8, 9  ·  Figure 2", size=9.5, weight="bold")
+
+    # ── Ground truth ─────────────────────────────────────────────────────────
+    for xb, title, body, ref in (
+            (0.25, "Phantoms with known eigenvalues",
+             "Rician noise at SNR 30, 20 and 10\nthe five linear-fit arms",
+             "Table 6"),
+            (4.65, "Simulations on the real gradient tables",
+             "idealised tensors, and each voxel's own fitted tensor\nRician noise at the measured noise level",
+             "Table 7  ·  Tables S3–S5")):
+        box(ax, xb, -0.30, 4.1, 1.2, ec=RULE, lw=1.0, ls=(0, (3, 2)))
+        text(ax, xb + 2.05, 0.68, title, size=8.8, weight="bold", color=INK)
+        text(ax, xb + 2.05, 0.30, body, size=7.8, color=RULE)
+        text(ax, xb + 2.05, -0.12, ref, size=8.8, weight="bold", color=INK)
 
     # ── Execution environment ────────────────────────────────────────────────
-    ax.plot([0.35, 10.15], [-0.12, -0.12], color=RULE, lw=0.8,
+    ax.plot([0.3, 8.7], [-0.48, -0.48], color=RULE, lw=0.8,
             ls=(0, (5, 3)), zorder=1)
-    text(ax, 5.25, -0.42,
-         "All steps run inside one container: FSL 6.0.7  ·  MRtrix3 3.0.4  "
-         "·  DIPY  —  nothing installed on the host",
-         size=8, color=RULE)
+    text(ax, cx, -0.70,
+         "All steps run inside one container: FSL 6.0.7  ·  MRtrix3 3.0.8  "
+         "·  DIPY 1.12.1",
+         size=8.6, color=RULE)
 
     for ext, dpi in (("png", 300), ("pdf", None)):
         out = FIG_DIR / f"fig1_design.{ext}"

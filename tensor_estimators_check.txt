@@ -1,0 +1,42 @@
+Reimplemented estimators against the toolkits' published maps
+MD in um^2/ms.
+
+====================================================================================
+stanford
+====================================================================================
+1. Every arm against its toolkit map; white matter = FA > 0.2 and admissible in every published arm (64,020 voxels)
+  arm        toolkit map               mean|dFA|  max|dFA|  n>0.001  mean|dMD|
+  ols        dti_iter0_fslols/fsl_dti   0.000062    0.0420      649   0.000055
+  measured   dti_iter0/fsl_dti          0.000003    0.0027       16   0.000002
+  iwls       dti/mrt                    0.000001    0.0000        0   0.000001
+  predicted  dti_iter0/dipy             0.000000    0.0000        0   0.000000
+2. Voxels differing by more than 0.001 in FA: % containing a measurement <= 0, and < 0.5 x MP-PCA sigma
+  ols            649 voxels:   4.3% <= 0,  82.3% < 0.5 sigma   (all white matter: 0.05% and 5.00%)
+  measured        16 voxels:   0.0% <= 0,  75.0% < 0.5 sigma   (all white matter: 0.05% and 5.00%)
+  iwls             0 voxels
+  predicted        0 voxels
+3. Measured-signal fit against FSL --wls on Table 4's voxel set (64,662 voxels)
+  with DIPY's eigenvalue clipping   FA MAE 0.000317  FA bias -0.000063  MD MAE 0.000145
+  without clipping                  FA MAE 0.000004  FA bias +0.000003  MD MAE 0.000008
+4. FSL --wls against MRtrix3 -iter 0 on Table 3's voxel set (64,747 voxels)
+  95% limits of agreement +/-0.00182; voxels differing by more than 0.001: 57 (0.088%), of which 40 contain a measurement <= 0; limits without them +/-0.00005
+
+====================================================================================
+sherbrooke
+====================================================================================
+1. Every arm against its toolkit map; white matter = FA > 0.2 and admissible in every published arm (103,869 voxels)
+  arm        toolkit map               mean|dFA|  max|dFA|  n>0.001  mean|dMD|
+  ols        dti_iter0_fslols/fsl_dti   0.000217    0.0768    1,868   0.000148
+  measured   dti_iter0/fsl_dti          0.000000    0.0002        0   0.000000
+  iwls       dti/mrt                    0.000000    0.0000        0   0.000000
+  predicted  dti_iter0/dipy             0.000000    0.0000        0   0.000000
+2. Voxels differing by more than 0.001 in FA: % containing a measurement <= 0, and < 0.5 x MP-PCA sigma
+  ols          1,868 voxels:  73.6% <= 0,  99.9% < 0.5 sigma   (all white matter: 1.47% and 9.52%)
+  measured         0 voxels
+  iwls             0 voxels
+  predicted        0 voxels
+3. Measured-signal fit against FSL --wls on Table 4's voxel set (105,423 voxels)
+  with DIPY's eigenvalue clipping   FA MAE 0.003496  FA bias -0.002288  MD MAE 0.002193
+  without clipping                  FA MAE 0.000001  FA bias +0.000000  MD MAE 0.000000
+4. FSL --wls against MRtrix3 -iter 0 on Table 3's voxel set (106,679 voxels)
+  95% limits of agreement +/-0.00005; voxels differing by more than 0.001: 7 (0.007%), of which 7 contain a measurement <= 0; limits without them +/-0.00005
