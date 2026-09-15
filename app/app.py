@@ -19,6 +19,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Long commands (dtifit takes six path arguments) otherwise run off the right
+# edge of the code block, where a horizontal scrollbar hides them.
+st.markdown(
+    """
+    <style>
+    div[data-testid="stCode"] pre, div[data-testid="stCode"] code {
+        white-space: pre-wrap !important;
+        overflow-wrap: anywhere !important;
+    }
+    div[data-testid="stCode"] pre { overflow-x: hidden !important; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ── Project root (one level up from app/)
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))

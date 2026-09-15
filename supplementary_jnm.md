@@ -6,11 +6,11 @@ Busra Mutlu, Department of Neuroimaging, King's College London
 
 ## S1. The execution environment
 
-The comparison in the main text depends on running FSL, MRtrix3 and DIPY on byte-identical input. All three are installed in one Docker container (Merkel, 2014), which also serves an interactive Streamlit interface (Streamlit Inc., 2019) presenting each pipeline stage in the three toolkits side by side (Supplementary Figure S1). The interface is described here for completeness; it is not evaluated in the article.
+The comparison in the main text depends on running FSL, MRtrix3 and DIPY on byte-identical input. All three are installed in one Docker container (Merkel, 2014). The container also serves an interactive Streamlit interface (Streamlit Inc., 2019), which presents each pipeline stage in the three toolkits side by side (Supplementary Figure S1). The interface is described here for completeness; it is not evaluated in the article.
 
 ### Container build
 
-The Dockerfile uses a two-stage build. The first stage copies MRtrix3 3.0.8 from the official `mrtrix3/mrtrix3` image, pinned by digest so that a later rebuild reproduces the same binaries. The second starts from `ubuntu:22.04`, installs FSL with the official `fslinstaller.py` (version 6.0.7 in the image used here), copies MRtrix3 from the first stage and installs the Python stack, including DIPY 1.12.1, NumPy 1.26 and nibabel, under Python 3.12. The two stages avoid dependency conflicts between FSL and MRtrix3. The image is built and launched with
+The Dockerfile uses a two-stage build. The first stage copies MRtrix3 3.0.8 from the official `mrtrix3/mrtrix3` image, pinned by digest so that a later rebuild reproduces the same binaries. The second starts from `ubuntu:22.04`, installs FSL with the official `fslinstaller.py` (version 6.0.7 in the image used here) and copies MRtrix3 from the first stage. It then installs the Python 3.12 stack, including DIPY 1.12.1, NumPy 1.26 and nibabel. The two stages avoid dependency conflicts between FSL and MRtrix3. The image is built and launched with
 
 ```bash
 docker build --platform linux/amd64 -t dmri-rosetta .
@@ -31,7 +31,7 @@ The interface covers seven stages, each on its own page:
 - tractography: MRtrix3 `tckgen` with iFOD2 (Tournier et al., 2010) and `tcksift2` (Smith et al., 2015), FSL `probtrackx2`, DIPY `LocalTracking`;
 - tract-based spatial statistics (Smith et al., 2006).
 
-When a toolkit lacks a stage, the page says so; for example, FSL has no denoiser. Each page shows the exact command, which can be copied and run outside the container. A reference section gives a guide to DTI metrics, a glossary and a command cheat sheet. Human Connectome Project data (Van Essen et al., 2013) can be used by those with access; the article uses only the two open datasets.
+When a toolkit lacks a stage, the page says so; for example, FSL has no denoiser. Each page shows the exact command, which can be copied and run outside the container. A reference section gives a guide to DTI metrics, a glossary and a command reference. Human Connectome Project data (Van Essen et al., 2013) can be used by those with access; the article uses only the two open datasets.
 
 ### Availability and requirements
 
@@ -49,7 +49,7 @@ When a toolkit lacks a stage, the page says so; for example, FSL has no denoiser
 
 ## S2. Brain extraction
 
-Brain extraction was compared separately from tensor fitting and makes the opposite choice about input. Each tool was run on the input its algorithm is designed for, because that input is part of the algorithm being compared: FSL `bet` on the mean b = 0 image, MRtrix3 `dwi2mask` on the full series, and DIPY `median_otsu` on the full series with the b = 0 volumes indexed. Agreement between each pair of masks was measured with the Dice similarity coefficient (DSC). The tensor fits did not use the FSL or MRtrix3 masks; every arm was given one shared mask, generated with the same `median_otsu` settings.
+Brain extraction was compared separately from tensor fitting and makes the opposite choice about input. Each tool was run on the input its algorithm is designed for, because that input is part of the algorithm being compared. FSL `bet` was run on the mean b = 0 image, MRtrix3 `dwi2mask` on the full series, and DIPY `median_otsu` on the full series with the b = 0 volumes indexed. Agreement between each pair of masks was measured with the Dice similarity coefficient (DSC). The tensor fits did not use the FSL or MRtrix3 masks; every arm was given one shared mask, generated with the same `median_otsu` settings.
 
 Pairwise DSC was between 0.9009 and 0.9277 on Stanford and between 0.9058 and 0.9668 on Sherbrooke (Supplementary Table S1). The coefficients conceal how differently the algorithms behave. On Stanford the mask volumes spanned 21%, from 167,950 voxels (MRtrix3) to 203,984 (FSL); on Sherbrooke they spanned 7%, and MRtrix3 moved from the most conservative mask to the most inclusive. Disagreement concentrated at the cortical boundary and at the lateral ventricles, which `median_otsu` excluded and the other two retained (Supplementary Figures S2 and S3). A mask that includes the ventricles admits high-diffusivity, near-isotropic voxels into any subsequent statistics.
 
@@ -66,7 +66,7 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 
 ## S4. Phantom accuracy in the isotropic region
 
-**Supplementary Table S2. Accuracy in the isotropic region of the phantoms.** True FA = 0, true MD = 0.90 µm²/ms; 5,408 voxels per region; Rician noise. SNR gives the nominal value of Table 6; this region had S₀ = 800, so its SNR was 24, 16 and 8. Bias is estimate minus truth; its standard error was at most 0.0011 for FA and 0.0010 for MD. Noise induces a positive FA bias in every arm, smallest with measured-signal weighting. Only measured-signal weighting underestimates MD materially. MD in µm²/ms.
+**Supplementary Table S2. Accuracy in the isotropic region of the phantoms.** True FA = 0, true MD = 0.90 µm²/ms; 5,408 voxels per region; Rician noise. SNR gives the nominal value of Table 6; this region had S₀ = 800, so its SNR was 24, 16 and 8. Bias is estimate minus truth; its standard error was at most 0.0011 for FA and 0.0010 for MD. Noise induces a positive FA bias in every arm, smallest with measured-signal weighting. Only measured-signal weighting underestimates MD by a substantial amount. MD in µm²/ms.
 
 | SNR | Arm | Weights | FA bias | FA RMSE | MD bias | MD RMSE |
 |---|---|---|---|---|---|---|
@@ -131,7 +131,7 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 |  | 0.6–0.7 | +0.0124 | −0.0128 | −0.1097 | −0.0664 |
 |  | 0.7–1.0 | +0.0237 | −0.0096 | −0.1157 | −0.0720 |
 
-**Supplementary Table S5. Which idealisation reverses the Sherbrooke FA offset.** Rician noise at each voxel's MP-PCA σ, added to the real tensors of Table 7 (DIPY fit, negative eigenvalues clipped at zero), with one idealisation of the simplified simulation imposed at a time. "All four" combines MD of 0.70 µm²/ms, axial symmetry, random orientation, and uniform S₀ and σ; it approximates the simplified simulation. Each value is measured-signal minus predicted-signal weighting, over the voxels of Table 7, as the mean of five noise draws; standard errors were at most 0.0005. The FA offset over all voxels is given under each rule for non-physical fits (Supplementary Table S6); the bin and MD columns use the exclusion rule. The real white matter median MD was 0.616 µm²/ms on Stanford and 0.594 µm²/ms on Sherbrooke. MD in µm²/ms.
+**Supplementary Table S5. Which idealisation reverses the Sherbrooke FA offset.** Rician noise was added at each voxel's MP-PCA σ to the real tensors of Table 7, that is, to the DIPY fit with negative eigenvalues clipped at zero. One idealisation of the simplified simulation was imposed at a time. "All four" combines MD of 0.70 µm²/ms, axial symmetry, random orientation, and uniform S₀ and σ; it approximates the simplified simulation. Each value is measured-signal minus predicted-signal weighting, over the voxels of Table 7, as the mean of five noise draws; standard errors were at most 0.0005. The FA offset over all voxels is given under each rule for non-physical fits (Supplementary Table S6); the bin and MD columns use the exclusion rule. The real white matter median MD was 0.616 µm²/ms on Stanford and 0.594 µm²/ms on Sherbrooke. MD in µm²/ms.
 
 | Dataset | Tensors | FA, exclude | FA, clip | FA, keep | FA 0.5–0.6 | FA 0.7–1.0 | MD, all |
 |---|---|---|---|---|---|---|---|
@@ -150,7 +150,7 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 |  | uniform S₀ and σ | −0.0001 | +0.0012 | +0.0031 | +0.0009 | +0.0138 | −0.0718 |
 |  | all four | −0.0086 | −0.0085 | −0.0081 | −0.0126 | −0.0095 | −0.0653 |
 
-**Supplementary Table S6. Sensitivity to the treatment of non-physical fits.** Voxels of Table 7. Exclude: a voxel is left out when either fit is physically inadmissible (the rule of Table 7). Clip: FA is clipped to [0, 1] and MD to [0, 3] µm²/ms. Keep: values are used as fitted. Each rule is applied identically to observed and simulated data. Simulated values are means of five noise draws at the voxel's MP-PCA σ multiplied by 1.00, by 1.28 (the measured noise level) or by the upper bound set by the spread of the residuals (1.39 on Stanford, 1.33 on Sherbrooke). Shares are the simulated offset at 1.28σ divided by the observed offset. All values are over all voxels. MD in µm²/ms.
+**Supplementary Table S6. Sensitivity to the treatment of non-physical fits.** Voxels of Table 7. Exclude: a voxel is left out when either fit is physically inadmissible (the rule of Table 7). Clip: FA is clipped to [0, 1] and MD to [0, 3] µm²/ms. Keep: values are used as fitted. Each rule is applied identically to observed and simulated data. Simulated values are means of five noise draws. The voxel's MP-PCA σ was multiplied by 1.00, by 1.28 (the measured noise level), or by the upper bound set by the spread of the residuals (1.39 on Stanford, 1.33 on Sherbrooke). Shares are the simulated offset at 1.28σ divided by the observed offset. All values are over all voxels. MD in µm²/ms.
 
 | Dataset | Rule | FA observed | FA sim (1.00σ) | FA sim (1.28σ) | FA sim (bound) | Share of FA | MD observed | MD sim (1.28σ) | Share of MD |
 |---|---|---|---|---|---|---|---|---|---|
@@ -161,7 +161,7 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 |  | clip | +0.0195 | +0.0093 | +0.0183 | +0.0201 | 94% | −0.1352 | −0.1167 | 86% |
 |  | keep | +0.0239 | +0.0138 | +0.0255 | +0.0278 | 106% | −0.1419 | −0.1289 | 91% |
 
-**Supplementary Table S7. Checks of the real-data offsets.** Offsets over the voxels of Table 7 (exclusion rule) after removing diffusion-weighted measurements more than 3σ below the predicted signal, after removing any measurement beyond ±3σ, or after shuffling each voxel's residuals across gradient directions; σ is the voxel's MP-PCA σ. Real: the operation applied to the real data. Noise only: the same operation applied to simulated data at 1.28σ, as a control (means of five noise draws; standard errors at most 0.0001). Residuals beyond −3σ and +3σ made up 1.38% and 2.37% of real measurements on Stanford (noise only: 0.57% and 1.02%), and 0.49% and 1.64% on Sherbrooke (noise only: 0.29% and 0.95%). MD in µm²/ms.
+**Supplementary Table S7. Checks of the real-data offsets.** Offsets over the voxels of Table 7, under the exclusion rule. Three operations are compared: removing diffusion-weighted measurements more than 3σ below the predicted signal, removing any measurement beyond ±3σ, and shuffling each voxel's residuals across gradient directions. Here σ is the voxel's MP-PCA σ. Real: the operation applied to the real data. Noise only: the same operation applied to simulated data at 1.28σ, as a control (means of five noise draws; standard errors at most 0.0001). Residuals beyond −3σ and +3σ made up 1.38% and 2.37% of real measurements on Stanford (noise only: 0.57% and 1.02%), and 0.49% and 1.64% on Sherbrooke (noise only: 0.29% and 0.95%). MD in µm²/ms.
 
 | Dataset | Operation | FA, real | FA, noise only | MD, real | MD, noise only |
 |---|---|---|---|---|---|

@@ -53,6 +53,13 @@ DATASET_TITLES = {
 }
 COLORS = {"FSL": "#2166AC", "MRtrix3": "#1A9850", "DIPY": "#D6604D"}
 
+# The command behind each panel, so that a reader of the figure does not have to
+# infer the estimator from the caption. main() rewrites MRtrix3's entry when the
+# run used -iter 0.
+ESTIMATOR = {"FSL": "dtifit --wls", "MRtrix3": "dwi2tensor (default)",
+             "DIPY": "TensorModel WLS"}
+MASK_CMD = {"FSL": "bet", "MRtrix3": "dwi2mask", "DIPY": "median_otsu"}
+
 # Metric maps written by generate_fa_maps.py, per tool.
 METRIC_FILES = {
     "FSL":     {"FA": "fsl_dti_FA.nii.gz", "MD": "fsl_dti_MD.nii.gz"},
@@ -219,11 +226,24 @@ def bland_altman(ax, a, b, label_a, label_b, unit_scale=1.0, unit=""):
                label=f"+1.96 SD = {md + 1.96 * sd:.4f}")
     ax.axhline(md - 1.96 * sd, color="red", lw=1, ls="--",
                label=f"-1.96 SD = {md - 1.96 * sd:.4f}")
+    # Where two arms agree to numerical precision, a handful of voxels with a
+    # non-physical fit would set the whole y-axis and hide the limits of
+    # agreement. Scale the axis to the bulk of the differences, and say on the
+    # panel how many points fall outside it rather than dropping them silently.
+    span = max(float(np.percentile(np.abs(diff - md), 99.9)), 1.96 * sd) * 1.6
+    if span > 0:
+        ax.set_ylim(md - span, md + span)
+        outside = int(np.sum(np.abs(diff - md) > span))
+        if outside:
+            ax.text(0.02, 0.02,
+                    f"{outside:,} voxels outside the axis\n"
+                    f"(largest difference {np.abs(diff - md).max():.4f})",
+                    transform=ax.transAxes, fontsize=6.5, va="bottom", color="dimgray")
     suffix = f" ({unit})" if unit else ""
     ax.set_xlabel(f"Mean{suffix}", fontsize=9)
-    ax.set_ylabel(f"{label_a} - {label_b}{suffix}", fontsize=9)
-    ax.legend(fontsize=7)
-    ax.set_title(f"Bland-Altman: {label_a} vs {label_b}", fontsize=9)
+    ax.set_ylabel(f"{label_a} − {label_b}{suffix}", fontsize=9)
+    ax.legend(fontsize=7, loc="upper right")
+    ax.set_title(f"Bland–Altman: {label_a} vs {label_b}", fontsize=9)
 
 
 def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
@@ -237,7 +257,8 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
         ax = fig.add_subplot(gs[0, col])
         im = ax.imshow(metrics[tool]["FA"][:, :, z_idx].T, cmap="hot",
                        origin="lower", vmin=0, vmax=1)
-        ax.set_title(f"{tool} FA", fontsize=11, color=COLORS[tool], fontweight="bold")
+        ax.set_title(f"{tool} FA\n{ESTIMATOR[tool]}", fontsize=10,
+                     color=COLORS[tool], fontweight="bold")
         ax.axis("off")
         plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
@@ -247,9 +268,12 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
         a = metrics[ta]["FA"][valid]
         b = metrics[tb]["FA"][valid]
         ax.scatter(a, b, s=1, alpha=0.15, color="grey", rasterized=True)
-        ax.plot([0, 1], [0, 1], "k--", lw=1, label="Identity")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
+        # The white matter mask starts at FA 0.2, so an axis from zero wastes a
+        # fifth of the panel and flattens the spread that matters.
+        lo = max(0.0, float(min(a.min(), b.min())) - 0.02)
+        ax.plot([lo, 1], [lo, 1], "k--", lw=1, label="Identity")
+        ax.set_xlim(lo, 1)
+        ax.set_ylim(lo, 1)
         ax.set_xlabel(f"{ta} FA", fontsize=9)
         ax.set_ylabel(f"{tb} FA", fontsize=9)
         ax.set_title(f"r = {st['FA']['r']:.4f}\nMAE = {st['FA']['MAE']:.4f}", fontsize=9)
@@ -259,7 +283,7 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
         ax_ba = fig.add_subplot(gs[2, col])
         bland_altman(ax_ba, a, b, ta, tb, unit="FA")
 
-    fig.suptitle(f"FA agreement across FSL / MRtrix3 / DIPY - {DATASET_TITLES.get(subj, subj)}",
+    fig.suptitle(f"FA agreement across FSL, MRtrix3 and DIPY — {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=1.01)
     for ext in ("png", "pdf"):
         out = fig_dir / f"fig3_fa_comparison_{subj}{TAG}.{ext}"
@@ -282,11 +306,11 @@ def make_figure4(masks, b0, z_idx, fig_dir, subj):
         ax.imshow(b0[:, :, z_idx].T, cmap="gray", origin="lower")
         ax.imshow(masks[tool][:, :, z_idx].T.astype(float), cmap=overlay_cmap,
                   origin="lower", alpha=0.35, vmin=0, vmax=1)
-        ax.set_title(f"{tool}\n{int(masks[tool].sum()):,} voxels",
+        ax.set_title(f"{tool} {MASK_CMD[tool]}\n{int(masks[tool].sum()):,} voxels",
                      fontsize=11, color=COLORS[tool], fontweight="bold")
         ax.axis("off")
 
-    fig.suptitle(f"Brain extraction comparison - {DATASET_TITLES.get(subj, subj)}",
+    fig.suptitle(f"Brain extraction comparison — {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=0.97)
     # Reserve the top strip for the suptitle. Without the rect, tight_layout
     # packs the panels up against it and the per-panel titles collide with it
@@ -446,6 +470,9 @@ def main():
     if args.mrtrix_iter is not None:
         sub_dir += f"_iter{args.mrtrix_iter}"
         tag += f"_iter{args.mrtrix_iter}"
+    if args.mrtrix_iter == 0:
+        # This run compares the estimators matched, so the panel must say so.
+        ESTIMATOR["MRtrix3"] = "dwi2tensor -iter 0"
     dti_dir = ROOT / "data" / "hcp" / subj / sub_dir
     fig_dir = ROOT / "figures"
     fig_dir.mkdir(exist_ok=True)
