@@ -5,7 +5,7 @@ De Crespigny Park, London SE5 8AF, United Kingdom
 
 Dear Editor,
 
-I am pleased to submit the manuscript **"Diffusion MRI toolkits differ in how they weight a tensor fit, not in how they implement it"** for consideration as a Research Article in the *Journal of Neuroscience Methods*.
+I am pleased to submit the manuscript **"Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit"** for consideration as a Research Article in the *Journal of Neuroscience Methods*.
 
 ## Why this work fits the journal
 

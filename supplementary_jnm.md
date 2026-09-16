@@ -1,6 +1,6 @@
 # Supplementary Material
 
-**Diffusion MRI toolkits differ in how they weight a tensor fit, not in how they implement it**
+**Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit**
 
 Busra Mutlu, Department of Neuroimaging, King's College London
 
