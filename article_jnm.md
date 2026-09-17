@@ -8,13 +8,13 @@
 
 ## Abstract
 
-**Background.** Veraart et al. (2013) showed that weighting a linear tensor fit by the measured signal biases the estimates. Weights from a predicted signal reduce this bias. Whether widely used toolkits follow this result has not been measured.
+**Background.** Veraart et al. (2013) showed that weighting a linear tensor fit by the measured signal biases the estimates. Weights from a predicted signal reduce this bias. Whether widely used toolkits follow it has not been measured.
 
-**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on two open datasets. Every input was held identical, so the estimator rather than the toolkit varied. The weighting schemes were tested against Rician-noise phantoms and against simulations on the real gradient tables.
+**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on two open datasets. Inputs were identical, so the estimator rather than the toolkit varied. The schemes were tested against Rician-noise phantoms and simulations on the real gradient tables.
 
-**Results.** FSL `--wls` and MRtrix3 `-iter 0` implement the same estimator and return matching tensors (r = 1.0000). The toolkits differ in the estimator they apply. MRtrix3 and DIPY weight by a predicted signal by default. FSL fits ordinary least squares by default; its `--wls` option weights by the measured signal. In the phantom's anisotropic region, that scheme had the largest bias. At SNR 10 it underestimated FA by 0.026 and MD by 0.054 µm²/ms; the other linear fits stayed within 0.007 of truth. On real data it differed from every other estimator by 0.023–0.119 µm²/ms in MD. The toolkit defaults agreed with one another within 0.004 µm²/ms.
+**Results.** FSL `--wls` and MRtrix3 `-iter 0` implement the same estimator and return matching tensors (r = 1.0000). The toolkits differ in the estimator they apply. MRtrix3 and DIPY weight by a predicted signal by default. FSL fits ordinary least squares by default; its `--wls` option weights by the measured signal. In the phantom's anisotropic region, that scheme had the largest bias. At SNR 10 it underestimated FA by 0.026 and MD by 0.054 µm²/ms; the other linear fits stayed within 0.007 of truth. On real data it differed from every other estimator by 0.023–0.119 µm²/ms in MD. The toolkit defaults agreed within 0.004 µm²/ms.
 
-**Comparison with existing methods.** Earlier work documents variability between analysis pipelines. Here, the variability from the tensor fit is traced to one estimator, selected by a command-line flag.
+**Comparison with existing methods.** Earlier work documents variability between pipelines. Here the variability from the tensor fit is traced to one estimator, set by a command-line flag.
 
 **Conclusions.** For FSL and MRtrix3, implementation is not the variable; the estimator is. Its MD bias grows as SNR falls, and can therefore differ between groups. Methods sections should report the estimator and its weighting, not only the toolkit.
 

@@ -12,7 +12,11 @@ Clean up the two cosmetic artefacts pandoc leaves in a .docx:
    modern Word opens it in Compatibility Mode and disables some features. We
    restamp it and declare compatibility mode 15 (Word 2013+).
 
-Neither affects content, but both look wrong to a reviewer opening the file.
+3. Line numbers. Elsevier asks for them so that a referee can point at a line
+   rather than at a paragraph. Pandoc writes none.
+
+None of this changes content. The first two look wrong to a reviewer opening
+the file; the third is asked for at submission.
 
 Usage:
     python scripts/polish_docx.py path/to/file.docx [more.docx ...]
@@ -143,6 +147,43 @@ def style_tables(path: Path, *, font="Times New Roman", size=10.0) -> int:
     return styled
 
 
+def add_line_numbers(path: Path, *, restart="continuous", distance=360) -> int:
+    """Number the lines continuously, so referees can cite one.
+
+    Word's schema fixes the order of the children of sectPr: lnNumType belongs
+    after pgBorders and before pgNumType. Appending it instead leaves a file
+    Word reports as corrupt, so it is inserted ahead of whichever of the later
+    elements appears first.
+    """
+    from docx import Document
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    followers = ("w:pgNumType", "w:cols", "w:formProt", "w:vAlign",
+                 "w:noEndnote", "w:titlePg", "w:textDirection", "w:bidi",
+                 "w:rtlGutter", "w:docGrid", "w:printerSettings")
+
+    doc = Document(path)
+    numbered = 0
+    for section in doc.sections:
+        sectPr = section._sectPr
+        for old in sectPr.findall(qn("w:lnNumType")):
+            sectPr.remove(old)
+        ln = OxmlElement("w:lnNumType")
+        ln.set(qn("w:countBy"), "1")
+        ln.set(qn("w:restart"), restart)
+        ln.set(qn("w:distance"), str(distance))
+        anchor = next((sectPr.find(qn(tag)) for tag in followers
+                       if sectPr.find(qn(tag)) is not None), None)
+        if anchor is None:
+            sectPr.append(ln)
+        else:
+            anchor.addprevious(ln)
+        numbered += 1
+    doc.save(path)
+    return numbered
+
+
 def polish(path: Path) -> None:
     lock = path.parent / f"~${path.name[2:]}"
     if lock.exists():
@@ -166,10 +207,11 @@ def polish(path: Path) -> None:
     shutil.move(tmp, path)
     n_tables = style_tables(path)
     n_blank = drop_empty_paragraphs(path)
+    n_sections = add_line_numbers(path)
     print(f"  removed {n_blank} empty paragraphs")
     audit(path)
     print(f"{path.name}: {removed} bookmarks removed, {n_tables} tables styled, "
-          "stamped as Word 16")
+          f"line numbers on {n_sections} section(s), stamped as Word 16")
 
 
 def drop_empty_paragraphs(path: Path) -> int:
