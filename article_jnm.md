@@ -4,7 +4,7 @@
 
 ¹ Department of Neuroimaging, King's College London, London, United Kingdom
 
-\* **Corresponding author.** Busra Mutlu, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: [KCL EMAIL]
+\* **Corresponding author.** Busra Mutlu, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: busra.mutlu_ipek@kcl.ac.uk
 
 ## Abstract
 
