@@ -8,8 +8,9 @@ message: >-
 type: software
 authors:
   - given-names: Busra
-    family-names: Mutlu
+    family-names: Mutlu Ipek
     affiliation: King's College London
+    orcid: 'https://orcid.org/0000-0001-8983-7277'
 repository-code: 'https://github.com/happybrotherhood/dmri-rosetta-stone'
 abstract: >-
   A container that runs FSL, MRtrix3 and DIPY on byte-identical diffusion
