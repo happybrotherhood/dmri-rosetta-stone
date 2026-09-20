@@ -1,10 +1,10 @@
 # Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit
 
-**Busra Mutlu**¹\*
+**Busra Mutlu Ipek**¹\*
 
 ¹ Department of Neuroimaging, King's College London, London, United Kingdom
 
-\* **Corresponding author.** Busra Mutlu, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: busra.mutlu_ipek@kcl.ac.uk
+\* **Corresponding author.** Busra Mutlu Ipek, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: busra.mutlu_ipek@kcl.ac.uk
 
 ## Abstract
 
@@ -247,7 +247,7 @@ The practical consequence concerns reporting. The toolkit and version do not des
 
 ## CRediT authorship contribution statement
 
-**Busra Mutlu:** Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation, Visualization, Writing – original draft, Writing – review and editing.
+**Busra Mutlu Ipek:** Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation, Visualization, Writing – original draft, Writing – review and editing.
 
 ## Declaration of competing interest
 

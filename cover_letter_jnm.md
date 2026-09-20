@@ -1,4 +1,4 @@
-Busra Mutlu
+Busra Mutlu Ipek
 Department of Neuroimaging, King's College London
 De Crespigny Park, London SE5 8AF, United Kingdom
 busra.mutlu_ipek@kcl.ac.uk
@@ -46,4 +46,4 @@ Thank you for considering this manuscript.
 
 Yours sincerely,
 
-Busra Mutlu
+Busra Mutlu Ipek

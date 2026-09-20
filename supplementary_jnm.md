@@ -2,7 +2,7 @@
 
 **Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit**
 
-Busra Mutlu, Department of Neuroimaging, King's College London
+Busra Mutlu Ipek, Department of Neuroimaging, King's College London
 
 ## S1. The execution environment
 
