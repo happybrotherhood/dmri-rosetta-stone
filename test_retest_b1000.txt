@@ -1,0 +1,65 @@
+MASiVar, b = 1000 s/mm^2, unprocessed; 38 scans (11 Cohort I, 27 Cohort II)
+White matter: FA > 0.2 and admissible eigenvalues in all five arms, per scan. MD in um^2/ms.
+Median WM voxels per scan 46,556; b = 0 SNR 16.0-36.5 (undefined for 4 scans with interpolated voxels, where MP-PCA fails)
+
+=== FA: variability for a fixed estimator (CoV, %) ===
+arm                          within ses between ses betw ses II betw scanner betw subject
+FSL default (OLS)                  0.72        0.29        0.31         3.20         2.70
+FSL --wls (measured)               0.67        0.42        0.38         2.80         2.55
+MRtrix3 default (IWLS)             0.66        0.20        0.32         3.26         2.70
+MRtrix3 -iter 0 (measured)         0.67        0.42        0.38         2.80         2.55
+DIPY WLS (predicted)               0.67        0.15        0.32         3.26         2.70
+
+=== FA: estimator offset, arm minus FSL --wls (measured) (% of reference mean) ===
+arm                            mean %    min %    max %  mean abs
+FSL default (OLS)               -0.11    -1.15    +0.78    0.0015
+FSL --wls (measured)            +0.00    +0.00    +0.00    0.0000
+MRtrix3 default (IWLS)          +1.33    +0.21    +2.18    0.0054
+MRtrix3 -iter 0 (measured)      +0.00    -0.00    +0.00    0.0000
+DIPY WLS (predicted)            +1.08    -0.04    +1.93    0.0045
+Between toolkit defaults (% of the second):
+  FSL default (OLS) vs MRtrix3 default (IWLS): mean -1.42%, range -1.93 to -0.95%
+  FSL default (OLS) vs DIPY WLS (predicted): mean -1.18%, range -1.67 to -0.73%
+  MRtrix3 default (IWLS) vs DIPY WLS (predicted): mean +0.24%, range +0.16 to +0.39%
+
+=== MD: variability for a fixed estimator (CoV, %) ===
+arm                          within ses between ses betw ses II betw scanner betw subject
+FSL default (OLS)                  1.34        0.84        0.78         3.07         1.23
+FSL --wls (measured)               0.93        1.52        0.55         5.72         1.45
+MRtrix3 default (IWLS)             1.36        0.88        0.79         2.93         1.25
+MRtrix3 -iter 0 (measured)         0.93        1.52        0.55         5.72         1.45
+DIPY WLS (predicted)               1.36        0.88        0.79         2.94         1.25
+
+=== MD: estimator offset, arm minus FSL --wls (measured) (% of reference mean) ===
+arm                            mean %    min %    max %  mean abs
+FSL default (OLS)               +8.52    +3.07   +14.08    0.0587
+FSL --wls (measured)            +0.00    +0.00    +0.00    0.0000
+MRtrix3 default (IWLS)          +9.00    +3.21   +14.96    0.0621
+MRtrix3 -iter 0 (measured)      +0.00    -0.00    +0.00    0.0000
+DIPY WLS (predicted)            +8.95    +3.18   +14.90    0.0617
+Between toolkit defaults (% of the second):
+  FSL default (OLS) vs MRtrix3 default (IWLS): mean -0.44%, range -0.81 to -0.13%
+  FSL default (OLS) vs DIPY WLS (predicted): mean -0.39%, range -0.79 to -0.09%
+  MRtrix3 default (IWLS) vs DIPY WLS (predicted): mean +0.05%, range +0.02 to +0.13%
+
+=== The offset is not constant: how it varies between scans ===
+Offset between weighting schemes = FSL --wls (measured) minus DIPY WLS (predicted);
+between defaults = FSL default (OLS) minus MRtrix3 default (IWLS). Cohort II, first session per scanner.
+FA, weighting schemes: across all scans SD 0.0019 (0.45% of mean FA); per scanner 1A -0.0069, 1B -0.0024, 2 -0.0039, 3 -0.0041; largest difference between scanners 0.0045 (1.09%)
+FA, defaults: across all scans SD 0.0011 (0.28% of mean FA); per scanner 1A -0.0061, 1B -0.0053, 2 -0.0048, 3 -0.0044; largest difference between scanners 0.0017 (0.42%)
+FA: between-scanner CoV 2.80% with measured-signal weighting against 3.20-3.26% with the three defaults (ratio 0.86); between-subject CoV 2.70%
+
+MD, weighting schemes: across all scans SD 0.0245 (3.21% of mean MD); per scanner 1A -0.0737, 1B -0.0511, 2 -0.0249, 3 -0.0308; largest difference between scanners 0.0488 (6.39%)
+MD, defaults: across all scans SD 0.0018 (0.24% of mean MD); per scanner 1A -0.0040, 1B -0.0024, 2 -0.0011, 3 -0.0013; largest difference between scanners 0.0029 (0.38%)
+MD: between-scanner CoV 5.72% with measured-signal weighting against 2.93-3.07% with the three defaults (ratio 1.94); between-subject CoV 1.25%
+
+=== Offset between weighting schemes against scan SNR ===
+FA (FSL --wls minus DIPY WLS): Spearman rho with b = 0 SNR = +0.342 (p = 0.047, n = 34)
+MD (FSL --wls minus DIPY WLS): Spearman rho with b = 0 SNR = +0.946 (p = 3.1e-17, n = 34)
+
+=== Admissibility (brain mask, % of voxels) ===
+FSL default (OLS)            inadmissible 4.69% (range 2.59-6.92); negative eigenvalue 0.73%
+FSL --wls (measured)         inadmissible 3.31% (range 2.30-5.13); negative eigenvalue 1.44%
+MRtrix3 default (IWLS)       inadmissible 5.98% (range 3.92-9.61); negative eigenvalue 0.79%
+MRtrix3 -iter 0 (measured)   inadmissible 3.31% (range 2.30-5.14); negative eigenvalue 1.43%
+DIPY WLS (predicted)         inadmissible 5.37% (range 3.36-9.31); negative eigenvalue 0.00%
