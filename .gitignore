@@ -57,3 +57,6 @@ data/hcp/100307/
 
 # MASiVar test-retest scans — fetch with scripts/fetch_masivar.py
 data/masivar/
+
+# All-arm refits with eigenvalues and tensors — regenerate with scripts/fit_all_arms.py
+data/hcp/*/arms/

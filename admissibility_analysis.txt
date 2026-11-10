@@ -1,0 +1,170 @@
+Phase-1 analyses: eigenvalue admissibility, independent voxel set, implementation agreement
+MD and eigenvalues in um^2/ms. Admissible = all eigenvalues >= 0 and largest <= 3.0.
+
+================================================================================================
+stanford: 187,948 brain voxels; independent white matter (two-channel FAST, WM PVE >= 0.5): 96,773 voxels (68,597 at PVE >= 0.9)
+  median FSL --wls FA in that mask 0.260; overlap with FA > 0.2 in FSL --wls: 61.8% of the mask
+  reimplemented DIPY WLS, clipped, against DIPY's FA over the brain: mean |dFA| 1.22e-08, 99.9th percentile 7.22e-08
+================================================================================================
+1. Inadmissible fits by type, % of voxels (brain / independent white matter)
+  arm                        lambda_min<0   lambda_max>3        MD<=0         FA>1      any (new)     old rule  missed by old
+  FSL default (OLS)             0.63/0.00      0.00/0.00    0.27/0.00    0.09/0.00      0.63/0.00    0.32/0.00      0.31/0.00
+  FSL --wls                     0.78/0.00      0.00/0.00    0.61/0.00    0.15/0.00      0.78/0.00    0.69/0.00      0.08/0.00
+  MRtrix3 default (IWLS)        0.38/0.00      0.17/0.00    0.50/0.00    0.15/0.00      0.49/0.00    0.67/0.00      0.08/0.00
+  MRtrix3 -iter 0               0.51/0.00      0.03/0.00    0.61/0.00    0.15/0.00      0.54/0.00    0.72/0.00      0.08/0.00
+  DIPY WLS (default)            0.00/0.00      0.22/0.00    0.00/0.00    0.00/0.00      0.22/0.00    0.17/0.00      0.05/0.00
+  DIPY NLLS                     0.00/0.00      0.05/0.00    0.00/0.00    0.00/0.00      0.05/0.00    0.04/0.00      0.01/0.00
+  DIPY RESTORE                  0.00/0.00      0.08/0.00    0.23/0.00    0.00/0.00      0.08/0.00    0.29/0.00      0.02/0.00
+  DIPY WLS, unclipped           0.31/0.00      0.22/0.00    0.18/0.00    0.10/0.00      0.49/0.00    0.40/0.00      0.09/0.00
+2. Where the inadmissible voxels lie (brain)
+  arm                       voxels  clusters  isolated  in >=10    edge     CSF  <=0 meas  <0.5 sigma
+  FSL default (OLS)          1,182       277     16.7%    67.4%   99.3%   34.1%     66.8%       65.4%
+  FSL --wls                  1,460       376     16.6%    58.7%   99.3%   46.6%     54.8%       70.3%
+  MRtrix3 default (IWLS)       926       309     22.2%    49.8%   94.7%   65.1%     52.8%       91.9%
+  MRtrix3 -iter 0            1,011       400     24.4%    30.5%   99.0%   68.3%     34.7%       91.0%
+  DIPY WLS (default)           411        52      1.9%    62.8%   91.0%   49.4%     91.2%       98.8%
+  DIPY NLLS                     85        25      8.2%     0.0%   92.9%   42.4%     92.9%       96.5%
+  DIPY RESTORE                 150        69     28.7%     0.0%   82.7%   84.0%     76.7%       94.7%
+  DIPY WLS, unclipped          927       306     21.8%    51.2%   94.8%   64.8%     53.7%       91.9%
+  (all brain voxels)                                              24.4%   23.2%      0.6%       14.8%
+3. Tables 2, 3 and 5 on the independent white-matter mask
+   Each pair uses the mask voxels admissible in both arms; 'lost' = voxels removed for each arm.
+  pair                                                 n     lost a/b    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  Table 2 (weighted fits as usually set up)
+  FSL --wls vs MRtrix3 default (IWLS)             96,770          0/3  0.9973   0.0156  -0.0149  0.9775   0.0242  -0.0242
+  FSL --wls vs DIPY WLS (default)                 96,773          0/0  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236
+  MRtrix3 default (IWLS) vs DIPY WLS (default)    96,770          3/0  0.9999   0.0017  +0.0017  0.9999   0.0006  +0.0006
+  Table 3 (estimator matched)
+  FSL --wls vs MRtrix3 -iter 0                    96,773          0/0  1.0000   0.0000  -0.0000  1.0000   0.0000  -0.0000
+  FSL --wls vs DIPY WLS (default)                 96,773          0/0  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236
+  MRtrix3 -iter 0 vs DIPY WLS (default)           96,773          0/0  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236
+  Table 5 (every arm against FSL --wls, one voxel set: admissible in all seven arms, 96,770 voxels)
+  FSL default (OLS) vs FSL --wls                  96,770          2/0  0.9958   0.0114  +0.0023  0.9826   0.0220  +0.0220
+  MRtrix3 default (IWLS) vs FSL --wls             96,770          3/0  0.9973   0.0156  +0.0149  0.9775   0.0242  +0.0242
+  MRtrix3 -iter 0 vs FSL --wls                    96,770          0/0  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000
+  DIPY WLS (default) vs FSL --wls                 96,770          0/0  0.9975   0.0140  +0.0133  0.9794   0.0237  +0.0236
+  DIPY NLLS vs FSL --wls                          96,770          0/0  0.9986   0.0112  +0.0106  0.9886   0.0176  +0.0176
+  DIPY RESTORE vs FSL --wls                       96,770          0/0  0.9983   0.0117  +0.0108  0.9877   0.0177  +0.0177
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  96,770          2/3  0.9975   0.0139  -0.0127  0.9983   0.0023  -0.0022
+  Defaults: FSL default (OLS) vs DIPY WLS (default)  96,770          2/0  0.9979   0.0125  -0.0110  0.9991   0.0018  -0.0016
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)  96,770          3/0  0.9999   0.0017  +0.0017  0.9999   0.0006  +0.0006
+  Sensitivity, WM PVE >= 0.9 (68,595 voxels admissible in all seven arms)
+  FSL default (OLS) vs FSL --wls                  68,595          2/0  0.9957   0.0116  +0.0001  0.9735   0.0197  +0.0197
+  MRtrix3 default (IWLS) vs FSL --wls             68,595          3/0  0.9979   0.0162  +0.0158  0.9606   0.0223  +0.0223
+  MRtrix3 -iter 0 vs FSL --wls                    68,595          0/0  1.0000   0.0000  +0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls                 68,595          0/0  0.9981   0.0143  +0.0138  0.9655   0.0217  +0.0217
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  68,595          2/3  0.9968   0.0168  -0.0157  0.9947   0.0027  -0.0027
+  Every mask voxel, nothing excluded: median |difference| and 95th / 99th percentile
+  FSL --wls vs MRtrix3 default (IWLS)           FA 0.0112 / 0.0455 / 0.0723   MD 0.0187 / 0.0610 / 0.1002
+  FSL --wls vs MRtrix3 -iter 0                  FA 0.0000 / 0.0000 / 0.0000   MD 0.0000 / 0.0000 / 0.0000
+  FSL --wls vs DIPY WLS (default)               FA 0.0100 / 0.0407 / 0.0666   MD 0.0184 / 0.0588 / 0.0960
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  FA 0.0007 / 0.0065 / 0.0126   MD 0.0001 / 0.0025 / 0.0072
+  FSL default (OLS) vs MRtrix3 default (IWLS)   FA 0.0075 / 0.0477 / 0.0761   MD 0.0005 / 0.0101 / 0.0254
+4. FSL --wls against MRtrix3 -iter 0 (implementation agreement)
+  frame: FSL's tensor matches MRtrix3's after multiplying (Dxy, Dxz, Dyz) by (-1, -1, 1) (FSL stores tensors in its voxel frame, with x reversed for images with a positive determinant; MRtrix3 in scanner coordinates)
+  brain, admissible in both (186,438 voxels): quantiles of |difference| 50 / 95 / 99 / 99.9 / max
+    FA   1.49e-08 / 3.63e-04 / 8.19e-03 / 3.65e-02 / 2.04e-01   1 - r = 1.0e-04
+    MD   0.00e+00 / 1.18e-03 / 3.62e-02 / 2.14e-01 / 4.80e-01   1 - r = 4.6e-04
+    Dxx  0.00e+00 / 9.10e-04 / 3.51e-02 / 2.28e-01 / 5.56e-01   1 - r = 5.1e-04
+    Dyy  0.00e+00 / 1.05e-03 / 3.47e-02 / 2.26e-01 / 5.12e-01   1 - r = 4.7e-04
+    Dzz  0.00e+00 / 1.01e-03 / 3.66e-02 / 2.12e-01 / 4.93e-01   1 - r = 4.3e-04
+    Dxy  9.09e-09 / 4.03e-04 / 8.03e-03 / 4.76e-02 / 2.37e-01   1 - r = 8.5e-04
+    Dxz  3.64e-09 / 4.27e-04 / 8.20e-03 / 4.40e-02 / 1.58e-01   1 - r = 6.0e-04
+    Dyz  3.64e-09 / 4.25e-04 / 8.39e-03 / 4.91e-02 / 3.51e-01   1 - r = 9.0e-04
+  independent white matter, admissible in both (96,773 voxels): quantiles of |difference| 50 / 95 / 99 / 99.9 / max
+    FA   7.45e-09 / 3.73e-08 / 5.96e-08 / 5.77e-06 / 1.14e-04   1 - r = 2.0e-11
+    MD   0.00e+00 / 5.82e-08 / 5.82e-08 / 4.20e-06 / 1.05e-04   1 - r = 6.0e-11
+    Dxx  0.00e+00 / 5.82e-08 / 5.82e-08 / 5.24e-06 / 2.68e-04   1 - r = 6.9e-11
+    Dyy  0.00e+00 / 2.91e-08 / 5.82e-08 / 3.97e-06 / 1.81e-04   1 - r = 2.6e-11
+    Dzz  0.00e+00 / 5.82e-08 / 5.82e-08 / 2.85e-06 / 3.33e-04   1 - r = 4.9e-11
+    Dxy  7.28e-09 / 1.46e-08 / 2.91e-08 / 3.95e-06 / 1.17e-04   1 - r = 5.0e-11
+    Dxz  2.73e-09 / 1.09e-08 / 2.91e-08 / 3.04e-06 / 1.51e-04   1 - r = 5.3e-11
+    Dyz  3.64e-09 / 1.09e-08 / 1.46e-08 / 2.50e-06 / 1.17e-04   1 - r = 3.1e-11
+  Table 3's voxel set (FA > 0.2 in the three toolkits, FA <= 1 in the pair): 57 voxels differ by more than 0.001 in FA
+    with a measurement <= 0: 40; without one: 17, of which 13 have a measurement below 0.5 sigma, 5 lie within 2 voxels of the brain edge, 0 are inadmissible in either fit
+    those 17: |dFA| median 0.0013, max 0.0027; smallest measurement / sigma median 0.39; smallest eigenvalue (FSL) median 1.4170 um^2/ms
+    first voxels (i, j, k): [(23, 36, 32), (24, 35, 31), (32, 43, 42), (33, 45, 42), (34, 67, 40)]
+  Over the whole brain: 6,687 voxels differ by more than 0.001 in FA (3.56%); 5.7% of them contain a measurement <= 0 and 77.7% one below 0.5 sigma
+
+================================================================================================
+sherbrooke: 186,450 brain voxels; independent white matter (two-channel FAST, WM PVE >= 0.5): 100,005 voxels (82,510 at PVE >= 0.9)
+  median FSL --wls FA in that mask 0.415; overlap with FA > 0.2 in FSL --wls: 87.8% of the mask
+  reimplemented DIPY WLS, clipped, against DIPY's FA over the brain: mean |dFA| 5.42e-08, 99.9th percentile 3.97e-07
+================================================================================================
+1. Inadmissible fits by type, % of voxels (brain / independent white matter)
+  arm                        lambda_min<0   lambda_max>3        MD<=0         FA>1      any (new)     old rule  missed by old
+  FSL default (OLS)             3.35/3.16      3.76/0.00    0.47/0.00    1.18/0.64      7.11/3.16    3.02/0.64      4.09/2.52
+  FSL --wls                     6.28/5.18      1.01/0.00    1.76/0.03    2.36/1.38      7.28/5.18    3.60/1.39      3.69/3.79
+  MRtrix3 default (IWLS)        3.39/3.20      4.00/0.00    0.46/0.00    1.21/0.67      7.39/3.21    3.11/0.67      4.28/2.53
+  MRtrix3 -iter 0               6.28/5.18      1.01/0.00    1.76/0.03    2.36/1.38      7.29/5.18    3.60/1.39      3.69/3.79
+  DIPY WLS (default)            0.00/0.00      3.91/0.00    0.00/0.00    0.00/0.00      3.91/0.00    1.67/0.00      2.24/0.00
+  DIPY NLLS                     0.00/0.00      2.71/0.00    0.00/0.00    0.00/0.00      2.71/0.00    0.94/0.00      1.77/0.00
+  DIPY RESTORE                  0.00/0.00      2.78/0.00    0.28/0.00    0.00/0.00      2.78/0.00    1.26/0.00      1.80/0.00
+  DIPY WLS, unclipped           3.30/3.08      3.91/0.00    0.47/0.00    1.18/0.64      7.21/3.09    3.07/0.64      4.13/2.44
+2. Where the inadmissible voxels lie (brain)
+  arm                       voxels  clusters  isolated  in >=10    edge     CSF  <=0 meas  <0.5 sigma
+  FSL default (OLS)         13,256     1,723      7.2%    75.7%   26.0%   70.2%      7.0%       54.0%
+  FSL --wls                 13,581     1,548      6.2%    78.3%   42.1%   54.6%      8.5%       51.4%
+  MRtrix3 default (IWLS)    13,780     1,699      6.9%    76.7%   26.6%   70.9%      8.6%       54.8%
+  MRtrix3 -iter 0           13,584     1,547      6.2%    78.4%   42.1%   54.6%      8.5%       51.4%
+  DIPY WLS (default)         7,286       311      2.2%    92.6%   17.2%  100.0%      9.6%       67.4%
+  DIPY NLLS                  5,047       269      2.7%    89.4%   11.2%  100.0%      6.9%       68.0%
+  DIPY RESTORE               5,177       278      2.7%    89.3%   11.8%  100.0%      6.9%       67.9%
+  DIPY WLS, unclipped       13,436     1,691      7.1%    76.4%   26.4%   71.1%      8.4%       54.8%
+  (all brain voxels)                                              17.2%   22.9%      2.2%       15.1%
+3. Tables 2, 3 and 5 on the independent white-matter mask
+   Each pair uses the mask voxels admissible in both arms; 'lost' = voxels removed for each arm.
+  pair                                                 n     lost a/b    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  Table 2 (weighted fits as usually set up)
+  FSL --wls vs MRtrix3 default (IWLS)             94,781    5176/3206  0.9727   0.0330  +0.0017  0.9420   0.0863  -0.0863
+  FSL --wls vs DIPY WLS (default)                 94,828       5176/1  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858
+  MRtrix3 default (IWLS) vs DIPY WLS (default)    96,799       3206/1  0.9999   0.0026  +0.0026  1.0000   0.0005  +0.0005
+  Table 3 (estimator matched)
+  FSL --wls vs MRtrix3 -iter 0                    94,829    5176/5176  1.0000   0.0000  -0.0000  1.0000   0.0000  +0.0000
+  FSL --wls vs DIPY WLS (default)                 94,828       5176/1  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858
+  MRtrix3 -iter 0 vs DIPY WLS (default)           94,828       5176/1  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858
+  Table 5 (every arm against FSL --wls, one voxel set: admissible in all seven arms, 94,641 voxels)
+  FSL default (OLS) vs FSL --wls                  94,641    3157/5176  0.9658   0.0372  -0.0036  0.9426   0.0859  +0.0859
+  MRtrix3 default (IWLS) vs FSL --wls             94,641    3206/5176  0.9725   0.0330  -0.0018  0.9421   0.0862  +0.0862
+  MRtrix3 -iter 0 vs FSL --wls                    94,641    5176/5176  1.0000   0.0000  +0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls                 94,641       1/5176  0.9722   0.0332  -0.0043  0.9433   0.0857  +0.0857
+  DIPY NLLS vs FSL --wls                          94,641       1/5176  0.9841   0.0250  -0.0047  0.9724   0.0618  +0.0618
+  DIPY RESTORE vs FSL --wls                       94,641       1/5176  0.9812   0.0267  -0.0033  0.9708   0.0621  +0.0621
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  94,641    3157/3206  0.9947   0.0143  -0.0018  0.9997   0.0013  -0.0003
+  Defaults: FSL default (OLS) vs DIPY WLS (default)  94,641       3157/1  0.9947   0.0141  +0.0007  0.9998   0.0013  +0.0002
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)  94,641       3206/1  0.9999   0.0025  +0.0025  1.0000   0.0005  +0.0005
+  Sensitivity, WM PVE >= 0.9 (77,425 voxels admissible in all seven arms)
+  FSL default (OLS) vs FSL --wls                  77,425    3157/5176  0.9655   0.0373  -0.0049  0.9268   0.0827  +0.0827
+  MRtrix3 default (IWLS) vs FSL --wls             77,425    3206/5176  0.9728   0.0328  -0.0028  0.9263   0.0831  +0.0831
+  MRtrix3 -iter 0 vs FSL --wls                    77,425    5176/5176  1.0000   0.0000  -0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls                 77,425       1/5176  0.9725   0.0330  -0.0054  0.9281   0.0826  +0.0826
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  77,425    3157/3206  0.9944   0.0147  -0.0021  0.9995   0.0014  -0.0003
+  Every mask voxel, nothing excluded: median |difference| and 95th / 99th percentile
+  FSL --wls vs MRtrix3 default (IWLS)           FA 0.0253 / 0.0978 / 0.1611   MD 0.0784 / 0.1707 / 0.2437
+  FSL --wls vs MRtrix3 -iter 0                  FA 0.0000 / 0.0000 / 0.0000   MD 0.0000 / 0.0000 / 0.0000
+  FSL --wls vs DIPY WLS (default)               FA 0.0258 / 0.1058 / 0.1850   MD 0.0783 / 0.1728 / 0.2494
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  FA 0.0018 / 0.0099 / 0.0599   MD 0.0002 / 0.0033 / 0.0273
+  FSL default (OLS) vs MRtrix3 default (IWLS)   FA 0.0103 / 0.0425 / 0.0640   MD 0.0005 / 0.0063 / 0.0151
+4. FSL --wls against MRtrix3 -iter 0 (implementation agreement)
+  frame: FSL's tensor matches MRtrix3's after multiplying (Dxy, Dxz, Dyz) by (-1, -1, 1) (FSL stores tensors in its voxel frame, with x reversed for images with a positive determinant; MRtrix3 in scanner coordinates)
+  brain, admissible in both (172,866 voxels): quantiles of |difference| 50 / 95 / 99 / 99.9 / max
+    FA   2.24e-08 / 2.38e-07 / 6.15e-05 / 2.43e-04 / 1.08e-03   1 - r = 3.4e-09
+    MD   0.00e+00 / 2.33e-07 / 7.31e-05 / 2.37e-04 / 6.06e-04   1 - r = 3.9e-10
+    Dxx  0.00e+00 / 2.33e-07 / 1.16e-04 / 4.37e-04 / 1.53e-03   1 - r = 1.4e-09
+    Dyy  0.00e+00 / 2.33e-07 / 1.32e-04 / 4.99e-04 / 1.65e-03   1 - r = 1.7e-09
+    Dzz  0.00e+00 / 2.33e-07 / 1.17e-04 / 4.26e-04 / 2.21e-03   1 - r = 1.3e-09
+    Dxy  7.28e-09 / 8.00e-08 / 1.08e-04 / 3.25e-04 / 1.15e-03   1 - r = 2.8e-08
+    Dxz  2.18e-08 / 1.24e-07 / 1.03e-04 / 3.22e-04 / 1.24e-03   1 - r = 2.4e-08
+    Dyz  1.46e-08 / 9.46e-08 / 1.09e-04 / 3.19e-04 / 9.03e-04   1 - r = 2.6e-08
+  independent white matter, admissible in both (94,829 voxels): quantiles of |difference| 50 / 95 / 99 / 99.9 / max
+    FA   2.98e-08 / 5.96e-08 / 1.19e-07 / 2.52e-06 / 5.35e-05   1 - r = 3.5e-12
+    MD   2.91e-08 / 5.82e-08 / 1.16e-07 / 1.47e-06 / 3.47e-05   1 - r = 2.8e-12
+    Dxx  2.91e-08 / 5.82e-08 / 1.16e-07 / 1.75e-06 / 1.00e-04   1 - r = 6.9e-12
+    Dyy  7.28e-09 / 5.82e-08 / 1.16e-07 / 2.01e-06 / 6.65e-05   1 - r = 4.8e-12
+    Dzz  2.91e-08 / 5.82e-08 / 1.16e-07 / 1.22e-06 / 8.40e-05   1 - r = 3.5e-12
+    Dxy  7.28e-09 / 1.46e-08 / 2.91e-08 / 1.37e-06 / 3.80e-05   1 - r = 5.8e-12
+    Dxz  1.46e-08 / 2.91e-08 / 3.64e-08 / 1.41e-06 / 5.21e-05   1 - r = 6.9e-12
+    Dyz  7.28e-09 / 2.18e-08 / 2.91e-08 / 1.12e-06 / 7.94e-05   1 - r = 7.9e-12
+  Table 3's voxel set (FA > 0.2 in the three toolkits, FA <= 1 in the pair): 7 voxels differ by more than 0.001 in FA
+    with a measurement <= 0: 7; without one: 0, of which 0 have a measurement below 0.5 sigma, 0 lie within 2 voxels of the brain edge, 0 are inadmissible in either fit
+  Over the whole brain: 10 voxels differ by more than 0.001 in FA (0.01%); 70.0% of them contain a measurement <= 0 and 100.0% one below 0.5 sigma
