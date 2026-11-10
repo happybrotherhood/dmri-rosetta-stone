@@ -1,4 +1,4 @@
-# Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit
+# Estimator choice, not implementation, accounts for most of the difference in diffusion tensor fitting between FSL, MRtrix3 and DIPY
 
 **Busra Mutlu Ipek**¹\*
 
@@ -8,17 +8,17 @@
 
 ## Abstract
 
-**Background.** Veraart et al. (2013) showed that weighting a linear tensor fit by the measured signal biases the estimates. Weights from a predicted signal reduce this bias. Whether widely used toolkits follow it has not been measured.
+**Background.** Weighting a linear tensor fit by the measured signal biases it; weights from a predicted signal do not (Salvador et al., 2005; Veraart et al., 2013). Which toolkit configurations apply each scheme, and whether it matters next to test-retest variability, is unknown.
 
-**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on two open datasets. Inputs were identical, so the estimator rather than the toolkit varied. The schemes were tested against Rician-noise phantoms and simulations on the real gradient tables.
+**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on identical input from two open datasets and 38 test-retest scans, so only the estimator varied. Agreement was measured on white matter defined without any tensor fit, keeping only fits with admissible eigenvalues. The schemes were scored against phantoms and simulations with crossing fibres, partial volume and the real gradient tables.
 
-**Results.** FSL `--wls` and MRtrix3 `-iter 0` implement the same estimator and return matching tensors (r = 1.0000). The toolkits differ in the estimator they apply. MRtrix3 and DIPY weight by a predicted signal by default. FSL fits ordinary least squares by default; its `--wls` option weights by the measured signal. In the phantom's anisotropic region, that scheme had the largest bias. At SNR 10 it underestimated FA by 0.026 and MD by 0.054 µm²/ms; the other linear fits stayed within 0.007 of truth. On real data it differed from every other estimator by 0.023–0.119 µm²/ms in MD. The toolkit defaults agreed within 0.004 µm²/ms.
+**Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. The toolkits differ in their default estimator. MRtrix3 and DIPY weight by a predicted signal; FSL fits ordinary least squares, and its `--wls` option weights by the measured signal. That option gave MD 0.02 to 0.09 µm²/ms lower than every other estimator, with a bias that grew as SNR fell, and raised between-scanner MD variability 1.6 to 1.9 times. The three defaults differed by less than test-retest variability on one shell, and by up to 0.012 µm²/ms with two shells.
 
-**Comparison with existing methods.** Earlier work documents variability between pipelines. Here the variability from the tensor fit is traced to one estimator, set by a command-line flag.
+**Comparison with existing methods.** Earlier work documents variability between whole pipelines; here it is traced to one estimator, set by a command-line flag.
 
-**Conclusions.** For FSL and MRtrix3, implementation is not the variable; the estimator is. Its MD bias grows as SNR falls, and can therefore differ between groups. Methods sections should report the estimator and its weighting, not only the toolkit.
+**Conclusions.** For these toolkits and versions, the estimator accounts for most of the difference. Methods sections should report the estimator and its weighting, not only the toolkit.
 
-**Keywords:** diffusion MRI; tensor fitting; weighted least squares; estimator bias; signal-to-noise ratio; reproducibility; software defaults
+**Keywords:** diffusion MRI; tensor fitting; weighted least squares; estimator bias; signal-to-noise ratio; test-retest variability; reproducibility
 
 ## Introduction
 
@@ -26,13 +26,13 @@ Diffusion MRI (dMRI) is the main non-invasive technique for probing white matter
 
 Three open-source packages dominate their computation: FSL (Smith et al., 2004; Jenkinson et al., 2012), MRtrix3 (Tournier et al., 2019) and DIPY (Garyfallidis et al., 2014). Each fits the tensor. Methods sections usually name the package, as if that identified the computation.
 
-Whether it does is a question of reproducibility. Analyses of the same data diverge when the pipeline, the analysing group or the scanner changes (Maier-Hein et al., 2017; Schilling et al., 2021; Tax et al., 2019). The fitting procedure is also a recognised pitfall of tensor analysis (Jones and Cercignani, 2010). These studies vary many choices at once, so a narrower question remains open. When only the software performing the tensor fit differs, how far do the toolkits disagree? And what inside the software is responsible?
+Whether it does is a question of reproducibility. Analyses of the same data diverge when the pipeline, the analysing group or the scanner changes (Maier-Hein et al., 2017; Schilling et al., 2021; Tax et al., 2019). The fitting procedure is also a recognised pitfall of tensor analysis (Jones and Cercignani, 2010). These studies vary many choices at once, so two narrower questions remain open. When only the software performing the tensor fit differs, how far do the toolkits disagree, and what inside the software is responsible? And is the disagreement large or small next to how much the same measure varies when the same person is scanned again?
 
-The estimation literature suggests where to look. A linear fit to the log-signal is usually weighted, because the logarithm distorts the noise (Salvador et al., 2005; Koay et al., 2006). The weights can come from the measured signal or from a signal predicted by an earlier fit. Veraart et al. (2013) compared the two. They described the resulting loss of accuracy as surprisingly high. Iteratively updated weights from a predicted signal performed better, in some cases better than non-linear least squares.
+The estimation literature says where to look. A linear fit to the log-signal needs weights, because the logarithm distorts the noise (Koay et al., 2006). Salvador et al. (2005) characterised the errors of the linearised model and showed that the weights should come from the signal predicted by a preliminary fit, with the option of refining them by iteration. This has been the standard recommendation since. Veraart et al. (2013) then quantified the cost of taking the weights from the measured signal instead, and found it surprisingly high. Weights from a predicted signal performed better, in some cases better than non-linear least squares.
 
-Whether the toolkits apply this result has not been examined. Each relevant choice is documented. MRtrix3 states that `dwi2tensor` reweights its fit twice. DIPY cites Chung et al. (2006) for its weights. FSL lists `--wls` in its help text. The manuals show that the components differ. They do not show whether two implementations of one estimator agree. Nor do they show which configurations carry the bias, how large it is at a realistic signal-to-noise ratio (SNR), or how it compares with the effect of changing toolkit.
+Whether the toolkits apply this recommendation has not been examined. Each relevant choice is documented. MRtrix3 states that `dwi2tensor` reweights its fit twice. DIPY cites Chung et al. (2006) for its weights. FSL lists `--wls` in its help text. The manuals show that the components differ. They do not show whether two implementations of one estimator agree, which configurations carry the bias, how large it is at a realistic signal-to-noise ratio (SNR), or how it compares with test-retest variability.
 
-We measured these directly. All three toolkits ran in one container on byte-identical data from two open datasets. We varied the estimator and swapped the weights inside one toolkit. We then scored the configurations against phantoms with known eigenvalues and against simulations on the real gradient tables. Every value can be regenerated from openly available data.
+This study makes three contributions. First, as a control, it shows that FSL and MRtrix3 return the same tensor when given the same estimator, so that differences between the toolkits can be attributed to the estimator rather than to the code. Second, it maps which distributed configuration implements which weighting scheme, and finds that the only weighted option of FSL implements the scheme the literature advises against. Third, it measures the size of the resulting differences against test-retest variability on repeated scans from four scanners, and tests whether the conclusions hold with crossing fibres, partial volume, multi-shell input, non-Rician noise and errors in the b-matrix. All three toolkits ran on identical data from open datasets, and every value can be regenerated.
 
 ## Materials and methods
 
