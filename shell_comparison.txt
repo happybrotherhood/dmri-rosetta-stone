@@ -1,0 +1,49 @@
+Sherbrooke: single shells and multi-shell input. FAST white matter; admissible = eigenvalues >= 0, largest <= 3.0. MD in um^2/ms; difference = arm minus reference.
+
+====================================================================================================
+b1000: DW SNR b = 1000: 6.3; 94,641 voxels admissible in all seven arms of 100,005
+====================================================================================================
+  arm                                       inadm %  FA mean  MD mean    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL default (OLS) vs FSL --wls               3.16   0.4201   0.6089  0.9658   0.0372  -0.0036  0.9426   0.0859  +0.0859
+  FSL --wls vs FSL --wls                       5.18   0.4237   0.5230  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000
+  MRtrix3 default (IWLS) vs FSL --wls          3.21   0.4220   0.6092  0.9725   0.0330  -0.0018  0.9421   0.0862  +0.0862
+  MRtrix3 -iter 0 vs FSL --wls                 5.18   0.4237   0.5230  1.0000   0.0000  +0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls              0.00   0.4194   0.6087  0.9722   0.0332  -0.0043  0.9433   0.0857  +0.0857
+  DIPY NLLS vs FSL --wls                       0.00   0.4190   0.5848  0.9841   0.0250  -0.0047  0.9724   0.0618  +0.0618
+  DIPY RESTORE vs FSL --wls                    0.00   0.4204   0.5851  0.9812   0.0267  -0.0033  0.9708   0.0621  +0.0621
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)                             0.9947   0.0143  -0.0018  0.9997   0.0013  -0.0003
+  Defaults: FSL default (OLS) vs DIPY WLS (default)                             0.9947   0.0141  +0.0007  0.9998   0.0013  +0.0002
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)                             0.9999   0.0025  +0.0025  1.0000   0.0005  +0.0005
+  FSL --wls vs MRtrix3 -iter 0 (94,829 voxels): |dFA| median 3.0e-08, 99.9th pct 2.5e-06, max 5.3e-05; negative eigenvalues FSL 5,176, MRtrix3 5,176
+
+====================================================================================================
+b2000: DW SNR b = 2000: 3.4; 99,859 voxels admissible in all seven arms of 100,005
+====================================================================================================
+  arm                                       inadm %  FA mean  MD mean    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL default (OLS) vs FSL --wls               0.02   0.3370   0.6396  0.9124   0.0528  +0.0188  0.9213   0.1199  +0.1199
+  FSL --wls vs FSL --wls                       0.14   0.3182   0.5196  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000
+  MRtrix3 default (IWLS) vs FSL --wls          0.05   0.3507   0.6425  0.9343   0.0539  +0.0325  0.9098   0.1229  +0.1229
+  MRtrix3 -iter 0 vs FSL --wls                 0.14   0.3182   0.5196  1.0000   0.0000  -0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls              0.00   0.3438   0.6407  0.9320   0.0510  +0.0256  0.9161   0.1210  +0.1210
+  DIPY NLLS vs FSL --wls                       0.00   0.3327   0.6027  0.9627   0.0365  +0.0145  0.9648   0.0831  +0.0831
+  DIPY RESTORE vs FSL --wls                    0.00   0.3340   0.6039  0.9568   0.0387  +0.0158  0.9612   0.0842  +0.0842
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)                             0.9782   0.0277  -0.0137  0.9956   0.0041  -0.0029
+  Defaults: FSL default (OLS) vs DIPY WLS (default)                             0.9808   0.0246  -0.0069  0.9978   0.0030  -0.0011
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)                             0.9992   0.0069  +0.0069  0.9991   0.0019  +0.0018
+  FSL --wls vs MRtrix3 -iter 0 (99,865 voxels): |dFA| median 1.5e-08, 99.9th pct 4.6e-05, max 1.5e-04; negative eigenvalues FSL 140, MRtrix3 140
+
+====================================================================================================
+b1000_2000: DW SNR b = 1000: 6.3, b = 2000: 3.4; 99,853 voxels admissible in all seven arms of 100,005
+====================================================================================================
+  arm                                       inadm %  FA mean  MD mean    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL default (OLS) vs FSL --wls               0.15   0.3298   0.6760  0.9484   0.0425  -0.0052  0.8012   0.1386  +0.1360
+  FSL --wls vs FSL --wls                       0.01   0.3350   0.5400  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000
+  MRtrix3 default (IWLS) vs FSL --wls          0.01   0.3492   0.6775  0.9704   0.0347  +0.0142  0.8270   0.1377  +0.1375
+  MRtrix3 -iter 0 vs FSL --wls                 0.01   0.3350   0.5400  1.0000   0.0000  -0.0000  1.0000   0.0000  -0.0000
+  DIPY WLS (default) vs FSL --wls              0.00   0.3479   0.6656  0.9691   0.0344  +0.0129  0.8348   0.1261  +0.1256
+  DIPY NLLS vs FSL --wls                       0.00   0.3411   0.6354  0.9831   0.0252  +0.0061  0.9237   0.0955  +0.0954
+  DIPY RESTORE vs FSL --wls                    0.00   0.3419   0.6367  0.9787   0.0273  +0.0069  0.8860   0.0982  +0.0967
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)                             0.9793   0.0333  -0.0194  0.8273   0.0456  -0.0015
+  Defaults: FSL default (OLS) vs DIPY WLS (default)                             0.9799   0.0325  -0.0181  0.8657   0.0448  +0.0104
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)                             0.9996   0.0036  +0.0013  0.9874   0.0119  +0.0119
+  FSL --wls vs MRtrix3 -iter 0 (99,993 voxels): |dFA| median 1.5e-08, 99.9th pct 2.1e-05, max 8.0e-05; negative eigenvalues FSL 12, MRtrix3 12
