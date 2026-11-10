@@ -21,6 +21,11 @@ the b = 0 + b = 1000 subset of Sherbrooke, with the shared median_otsu mask.
 --denoised fits the arms of Tables 8 and 9 to the MP-PCA-denoised series
 instead, into arms_denoised/.
 
+--shells, for Sherbrooke, selects other volumes of the three-shell series:
+"2000" fits b = 0 + b = 2000 (into arms_b2000/) and "1000,2000" fits both
+shells together (into arms_b1000_2000/), as Reviewer 1 asked (S1, S2). The
+subset is extracted here, once, and the same volumes go to every arm.
+
 dipy_wls_measured is the arm of Table 4: DIPY's own WLS code given the
 squared measured signal as weights, so that only the source of the weights
 differs from DIPY's default. The signal is floored at 1 for that arm, as a
@@ -124,6 +129,24 @@ def fit_dipy(img, bvals, bvecs, mask, d, method):
          img, d / f"{tag}_tensor.nii.gz")
 
 
+def extract_shells(base, shells, d):
+    """b = 0 plus the requested shells of the full Sherbrooke series, written once for every arm."""
+    dd = base / "T1w" / "Diffusion"
+    bvals, bvecs = np.loadtxt(dd / "bvals"), np.loadtxt(dd / "bvecs")
+    if bvecs.shape[0] != 3:
+        bvecs = bvecs.T
+    rounded = np.round(bvals, -2)
+    sel = (bvals < 50) | np.isin(rounded, shells)
+    out = (d / "subset_data.nii.gz", d / "subset.bvals", d / "subset.bvecs")
+    if not out[0].exists():
+        img = nib.load(str(dd / "data.nii.gz"))
+        nib.save(nib.Nifti1Image(img.get_fdata(dtype=np.float32)[..., sel], img.affine), str(out[0]))
+        np.savetxt(str(out[1]), bvals[sel][None, :], fmt="%g")
+        np.savetxt(str(out[2]), bvecs[:, sel], fmt="%.6f")
+    print(f"shells {shells}: {int(sel.sum())} of {bvals.size} volumes")
+    return out
+
+
 def fast_wm(img, bvals, mask, d):
     """Two-channel FAST (mean b = 0, mean DWI): an estimator-free tissue segmentation."""
     m = nib.load(str(mask)).get_fdata() > 0
@@ -144,6 +167,7 @@ def main():
                     help="arms to fit; give none to redo only the segmentation")
     ap.add_argument("--denoised", action="store_true",
                     help="fit the MP-PCA-denoised series (Tables 8 and 9) into arms_denoised/")
+    ap.add_argument("--shells", help='Sherbrooke only: "2000" or "1000,2000"')
     args = ap.parse_args()
     if args.arms is None:
         args.arms = DENOISED_ARMS if args.denoised else ARMS
@@ -155,13 +179,19 @@ def main():
     dwi, bval, bvec = (base / p for p in (INPUT_DENOISED if args.denoised else INPUT)[args.subject])
     mask = base / "dti" / "shared_brain_mask.nii.gz"
     d = base / ("arms_denoised" if args.denoised else "arms")
+    if args.shells:
+        if args.subject != "sherbrooke" or args.denoised:
+            sys.exit("--shells applies to the unprocessed Sherbrooke series")
+        d = base / ("arms_b" + args.shells.replace(",", "_"))
+        d.mkdir(exist_ok=True)
+        dwi, bval, bvec = extract_shells(base, [int(b) for b in args.shells.split(",")], d)
     d.mkdir(exist_ok=True)
     img = nib.load(str(dwi))
     bvals, bvecs = np.loadtxt(bval), np.loadtxt(bvec)
     if bvecs.shape[0] != 3:
         bvecs = bvecs.T
 
-    if not args.denoised:     # the analysis mask always comes from the unprocessed data
+    if not args.denoised and not args.shells:   # the analysis mask always comes from the main input
         fast_wm(img, bvals, mask, d)
     for arm in args.arms:
         print(f"{args.subject}: {arm}", flush=True)

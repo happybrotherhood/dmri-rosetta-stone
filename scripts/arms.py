@@ -27,8 +27,10 @@ def load(path):
     return np.nan_to_num(np.asarray(nib.load(str(path)).dataobj, dtype=np.float64))
 
 
-def arm_dir(subj, denoised=False):
-    return ROOT / "data" / "hcp" / subj / ("arms_denoised" if denoised else "arms")
+def arm_dir(subj, denoised=False, tag=None):
+    """arms/, arms_denoised/, or arms_<tag>/ (e.g. tag="b2000" for another shell selection)."""
+    name = f"arms_{tag}" if tag else ("arms_denoised" if denoised else "arms")
+    return ROOT / "data" / "hcp" / subj / name
 
 
 def brain_mask(subj):
@@ -55,9 +57,9 @@ def wm_mask(subj, pve=WM_PVE):
     return brain_mask(subj) & (tissue(subj)[0] >= pve)
 
 
-def load_arm(subj, arm, denoised=False, tensor=False):
+def load_arm(subj, arm, denoised=False, tensor=False, tag=None):
     """FA, MD (um^2/ms), eigenvalues (um^2/ms) and optionally the tensor of one arm."""
-    d = arm_dir(subj, denoised)
+    d = arm_dir(subj, denoised, tag)
     out = {"FA": load(d / f"{arm}_FA.nii.gz"), "MD": load(d / f"{arm}_MD.nii.gz") * 1e3,
            "ev": np.stack([load(d / f"{arm}_L{i}.nii.gz") for i in (1, 2, 3)], -1) * 1e3}
     if tensor:

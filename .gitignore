@@ -61,3 +61,4 @@ data/masivar/
 # All-arm refits with eigenvalues and tensors — regenerate with scripts/fit_all_arms.py
 data/hcp/*/arms/
 data/hcp/*/arms_denoised/
+data/hcp/*/arms_b*/

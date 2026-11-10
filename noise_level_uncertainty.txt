@@ -1,0 +1,32 @@
+Noise level: independent estimates, uncertainty, and the noise distribution after reconstruction
+
+==========================================================================================
+stanford: 96,773 white-matter voxels
+==========================================================================================
+1. Estimates of sigma in white matter
+  MP-PCA (manuscript)               17.99
+  b = 0 temporal SD, corrected      22.86   (10 volumes; median SD 22.01)
+2. Ratio b = 0 SD / MP-PCA sigma, corrected: 1.286, 95% bootstrap CI 1.283-1.289 over voxels (2000 resamples)
+   The ratio is also a property of the voxel: its interquartile range over voxels is 1.058-1.552
+  PIESNO (N = 1), per slice        17.36   (IQR 16.10-18.48, 76 slices)
+  residuals, robust SD (upper bound)    23.64   = 1.314 x MP-PCA sigma
+3. Background not usable for the noise distribution: 39% of voxels outside the brain are exactly zero and the rest carry ghosting
+
+==========================================================================================
+sherbrooke: 100,005 white-matter voxels
+==========================================================================================
+1. Estimates of sigma in white matter
+  MP-PCA (manuscript)               22.31
+  b = 0 temporal SD              n/a       (one b = 0 volume)
+  PIESNO (N = 1), per slice        15.12   (IQR 15.12-15.68, 60 slices)
+  residuals, robust SD (upper bound)    27.05   = 1.212 x MP-PCA sigma
+3. Noise distribution in the background (corner regions, b = 0 volume)
+  31,104 corner voxels: mean 19.86, median 19.00, SD 6.30, zeros 0.0%
+  Rician-corrected sigma = mean / sqrt(pi/2) = 15.85; MP-PCA sigma in white matter 22.31; MP-PCA sigma in the corner voxels 9.66
+                  p75/p25  p90/p10  median/mean
+  observed          1.600    2.333        0.957
+  L = 1             2.192    4.669        0.939
+  L = 2             1.673    2.706        0.975
+  L = 4             1.419    1.954        0.989
+  L = 8             1.276    1.590        0.995
+  L = 16            1.185    1.382        0.997
