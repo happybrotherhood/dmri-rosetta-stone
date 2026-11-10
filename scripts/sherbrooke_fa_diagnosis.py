@@ -8,12 +8,14 @@ the opposite FA sign to the data.
 Both schemes are fitted with tensor_estimators.py, which reproduces FSL
 dtifit --wls and DIPY WLS on these data (tensor_estimators_check.txt).
 
-Voxels and FA bins are taken from the DIPY fit alone (FA > 0.2, admissible).
-DIPY clips negative eigenvalues, so its fit is always physically admissible;
-the measured-signal fit is not, and selecting or binning voxels on its output
-would select on the very offset being measured. Non-physical measured-signal
-fits are handled by one of three rules, applied identically to observed and
-simulated data, and every result is reported under the main rule:
+Voxels are the FAST white matter of arms.py with DIPY FA > 0.2, binned by the
+DIPY fit alone. DIPY clips negative eigenvalues, so its fit is almost always
+admissible; the measured-signal fit is not, and selecting or binning voxels
+on its output would select on the very offset being measured. A fit is
+admissible when its eigenvalues are all >= 0 and the largest is <= 3.0
+um^2/ms (arms.py). Non-physical measured-signal fits are handled by one of
+three rules, applied identically to observed and simulated data, and every
+result is reported under the main rule:
 
   exclude   a voxel is left out when either fit is inadmissible (main rule)
   clip      FA is clipped to [0, 1] and MD to [0, 3] um^2/ms; no voxel removed
@@ -55,6 +57,7 @@ import numpy as np
 from scipy.stats import chi2
 
 import tensor_estimators as te
+from arms import admissible, load_arm, wm_mask
 
 ROOT = Path(__file__).parent.parent
 EDGES = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0001]
@@ -112,10 +115,12 @@ def random_rotation(n, rng):
     return q * np.sign(np.einsum("vii->vi", r))[:, None, :]
 
 
-def rule_offsets(fm, mm, fp, mp, bins) -> dict:
-    """Measured minus predicted, binned, under each rule for non-physical fits."""
+def rule_offsets(fm, mm, fp, mp, bins, ok_m, ok_p) -> dict:
+    """Measured minus predicted, binned, under each rule for non-physical fits.
+
+    ok_m and ok_p say which fits are admissible on their eigenvalues."""
     every = np.ones(len(fm), bool)
-    sel = te.admissible(fm, mm) & te.admissible(fp, mp)
+    sel = ok_m & ok_p
     cf, cm = (lambda a: np.clip(a, 0, 1)), (lambda a: np.clip(a, 0, 3))
     return {
         "exclude": (binned(fm - fp, bins, sel), binned(mm - mp, bins, sel), float(sel.mean())),
@@ -125,9 +130,11 @@ def rule_offsets(fm, mm, fp, mp, bins) -> dict:
 
 
 def fit_offsets(X, y, bins, keep=None):
-    fm, mm, _ = te.fit_fa_md(X, y, "measured", keep)
+    fm, mm, bm = te.fit_fa_md(X, y, "measured", keep)
     fp, mp, bp = te.fit_fa_md(X, y, "predicted", keep)
-    return rule_offsets(fm, mm, fp, mp, bins), bp
+    ok_m = admissible(te.eigenvalues(X, bm, "measured") * 1e3)
+    ok_p = admissible(te.eigenvalues(X, bp, "predicted") * 1e3)
+    return rule_offsets(fm, mm, fp, mp, bins, ok_m, ok_p), bp
 
 
 class Result:
@@ -230,7 +237,8 @@ def run(subj, si, w, k_common=None):
     fa_m_pub, fa_p_pub = load(it / "fsl_dti_FA.nii.gz"), load(it / "dipy_FA.nii.gz")
     md_m_pub = load(it / "fsl_dti_MD.nii.gz") * 1e3
     md_p_pub = load(it / "dipy_MD.nii.gz") * 1e3
-    uni = te.admissible(fa_p_pub, md_p_pub, 0.2)
+    ev_m_pub, ev_p_pub = load_arm(subj, "fsl_wls")["ev"], load_arm(subj, "dipy_wls")["ev"]
+    uni = wm_mask(subj) & (fa_p_pub > 0.2) & admissible(ev_p_pub)
     bins = fa_p_pub[uni]
     Y = np.asarray(nib.load(str(data_p)).dataobj, dtype=np.float32)[uni].astype(np.float64)
     sig = load(d / "dti_denoised" / "noise_map.nii.gz")[uni][:, None]
@@ -241,7 +249,7 @@ def run(subj, si, w, k_common=None):
     w()
     w("=" * 110)
     w(f"{subj}: {n_b0} b=0 + {int(dw.sum())} directions at "
-      f"b={int(np.round(bvals[dw].mean(), -2))};  {n:,} voxels with DIPY FA > 0.2 (bins by DIPY FA)")
+      f"b={int(np.round(bvals[dw].mean(), -2))};  {n:,} FAST white-matter voxels with DIPY FA > 0.2 (bins by DIPY FA)")
     w("=" * 110)
 
     fm, mm, _ = te.fit_fa_md(X, Y, "measured")
@@ -252,7 +260,8 @@ def run(subj, si, w, k_common=None):
         df, dm = np.abs(f - fpub[uni]), np.abs(m - mpub[uni])
         w(f"  {label}:  FA {df.mean():.6f} ({df.max():.4f})   MD {dm.mean():.6f} ({dm.max():.4f})")
 
-    obs = single(rule_offsets(fa_m_pub[uni], md_m_pub[uni], fa_p_pub[uni], md_p_pub[uni], bins))
+    obs = single(rule_offsets(fa_m_pub[uni], md_m_pub[uni], fa_p_pub[uni], md_p_pub[uni], bins,
+                              admissible(ev_m_pub[uni]), admissible(ev_p_pub[uni])))
     w(f"  observed voxels kept under 'exclude': {100 * obs['exclude']['kept']:.1f}%")
 
     fitted = signal(X, bp)
