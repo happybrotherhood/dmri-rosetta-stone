@@ -18,6 +18,13 @@ about two thirds of the brain as white matter.
 
 Inputs are those of the published tables: the whole Stanford series, and
 the b = 0 + b = 1000 subset of Sherbrooke, with the shared median_otsu mask.
+--denoised fits the arms of Tables 8 and 9 to the MP-PCA-denoised series
+instead, into arms_denoised/.
+
+dipy_wls_measured is the arm of Table 4: DIPY's own WLS code given the
+squared measured signal as weights, so that only the source of the weights
+differs from DIPY's default. The signal is floored at 1 for that arm, as a
+zero measurement would otherwise give the weighted design matrix a zero row.
 
 Run inside the project container:
 
@@ -36,9 +43,14 @@ import nibabel as nib
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-ARMS = ["fsl_ols", "fsl_wls", "mrt_iwls", "mrt_wls", "dipy_wls", "dipy_nlls", "dipy_restore"]
+ARMS = ["fsl_ols", "fsl_wls", "mrt_iwls", "mrt_wls", "dipy_wls", "dipy_nlls", "dipy_restore",
+        "dipy_wls_measured"]
+DENOISED_ARMS = ["fsl_wls", "mrt_iwls", "dipy_wls"]   # the arms of Tables 8 and 9
 INPUT = {"stanford": ("T1w/Diffusion/data.nii.gz", "T1w/Diffusion/bvals", "T1w/Diffusion/bvecs"),
          "sherbrooke": ("dti/subset_data.nii.gz", "dti/subset.bvals", "dti/subset.bvecs")}
+INPUT_DENOISED = {"stanford": ("dti_denoised/denoised_full.nii.gz", "T1w/Diffusion/bvals", "T1w/Diffusion/bvecs"),
+                  "sherbrooke": ("dti_denoised/subset_data.nii.gz", "dti_denoised/subset.bvals",
+                                 "dti_denoised/subset.bvecs")}
 
 
 def run(cmd):
@@ -90,11 +102,19 @@ def fit_mrtrix(dwi, bval, bvec, mask, d, iters):
 
 def fit_dipy(img, bvals, bvecs, mask, d, method):
     from dipy.core.gradients import gradient_table
-    from dipy.reconst.dti import TensorModel
+    from dipy.reconst import dti
     tag = f"dipy_{method.lower()}"
     gtab = gradient_table(bvals, bvecs=bvecs)
     m = nib.load(str(mask)).get_fdata().astype(bool)
-    fit = TensorModel(gtab, fit_method=method).fit(img.get_fdata(dtype=np.float32), mask=m)
+    data = img.get_fdata(dtype=np.float32)
+    if method == "WLS_MEASURED":
+        flat = np.maximum(data[m], 1.0)
+        params, _ = dti.wls_fit_tensor(dti.design_matrix(gtab), flat, weights=flat ** 2)
+        full = np.zeros(m.shape + (12,))
+        full[m] = params
+        fit = dti.TensorFit(dti.TensorModel(gtab), full)
+    else:
+        fit = dti.TensorModel(gtab, fit_method=method).fit(data, mask=m)
     save(fit.fa, img, d / f"{tag}_FA.nii.gz")
     save(fit.md, img, d / f"{tag}_MD.nii.gz")
     for i in range(3):
@@ -120,24 +140,29 @@ def fast_wm(img, bvals, mask, d):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--subject", required=True, choices=INPUT)
-    ap.add_argument("--arms", nargs="*", default=ARMS, choices=ARMS,
+    ap.add_argument("--arms", nargs="*", default=None, choices=ARMS,
                     help="arms to fit; give none to redo only the segmentation")
+    ap.add_argument("--denoised", action="store_true",
+                    help="fit the MP-PCA-denoised series (Tables 8 and 9) into arms_denoised/")
     args = ap.parse_args()
+    if args.arms is None:
+        args.arms = DENOISED_ARMS if args.denoised else ARMS
     for tool in ("dtifit", "dwi2tensor", "fast"):
         if not shutil.which(tool):
             sys.exit(f"{tool} not on PATH — run inside the project container")
 
     base = ROOT / "data" / "hcp" / args.subject
-    dwi, bval, bvec = (base / p for p in INPUT[args.subject])
+    dwi, bval, bvec = (base / p for p in (INPUT_DENOISED if args.denoised else INPUT)[args.subject])
     mask = base / "dti" / "shared_brain_mask.nii.gz"
-    d = base / "arms"
+    d = base / ("arms_denoised" if args.denoised else "arms")
     d.mkdir(exist_ok=True)
     img = nib.load(str(dwi))
     bvals, bvecs = np.loadtxt(bval), np.loadtxt(bvec)
     if bvecs.shape[0] != 3:
         bvecs = bvecs.T
 
-    fast_wm(img, bvals, mask, d)
+    if not args.denoised:     # the analysis mask always comes from the unprocessed data
+        fast_wm(img, bvals, mask, d)
     for arm in args.arms:
         print(f"{args.subject}: {arm}", flush=True)
         if arm.startswith("fsl"):
@@ -145,7 +170,7 @@ def main():
         elif arm.startswith("mrt"):
             fit_mrtrix(dwi, bval, bvec, mask, d, iters=0 if arm == "mrt_wls" else None)
         else:
-            fit_dipy(img, bvals, bvecs.T, mask, d, arm.split("_")[1].upper())
+            fit_dipy(img, bvals, bvecs.T, mask, d, arm[len("dipy_"):].upper())
     if (d / "dwi.mif").exists():
         (d / "dwi.mif").unlink()
     print("done")

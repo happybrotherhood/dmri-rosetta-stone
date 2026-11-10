@@ -46,6 +46,7 @@ from scipy.stats import pearsonr
 
 sys.path.insert(0, str(Path(__file__).parent))
 import tensor_estimators as te  # noqa: E402
+from arms import tissue  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 ARMS = ["fsl_ols", "fsl_wls", "mrt_iwls", "mrt_wls", "dipy_wls", "dipy_nlls", "dipy_restore"]
@@ -108,13 +109,7 @@ def main():
         low = np.zeros(brain.shape, bool)
         low[brain] = (Y < 0.5 * sig[brain][:, None]).any(1)
 
-        # tissue classes from FAST; on the T2-weighted b = 0 image white matter is
-        # the darkest class, and CSF has the least diffusion-weighted signal
-        b0, dwi = load(d, "b0_brain.nii.gz"), load(d, "dwi_brain.nii.gz")
-        pve = [load(d, f"fast_pve_{i}.nii.gz") for i in range(3)]
-        cls = [brain & (p >= 0.5) for p in pve]
-        wm_pve = pve[int(np.argmin([b0[c].mean() for c in cls]))]
-        csf_pve = pve[int(np.argmin([dwi[c].mean() for c in cls]))]
+        wm_pve, csf_pve = tissue(subj)
         wm = brain & (wm_pve >= 0.5)
         wm90 = brain & (wm_pve >= 0.9)
         edge = brain & (ndimage.distance_transform_edt(brain) <= 2)

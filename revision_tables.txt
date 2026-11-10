@@ -1,0 +1,89 @@
+Revised Tables 2, 3, 4, 5, 8 and 9
+Voxels: FAST white matter (two-channel, PVE >= 0.5). Admissible: eigenvalues >= 0, largest <= 3.0.
+Difference = first arm minus second. MD in um^2/ms. LoA = 1.96 SD of the difference.
+
+====================================================================================================
+stanford: 96,773 white-matter voxels
+  voxels each arm loses to the admissibility rule: FSL default (OLS) 2, FSL --wls 0, MRtrix3 default (IWLS) 3, MRtrix3 -iter 0 0, DIPY WLS (default) 0, DIPY NLLS 0, DIPY RESTORE 0, DIPY WLS, measured weights 0
+====================================================================================================
+Table 2. Weighted fits as usually set up
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL --wls vs MRtrix3 default (IWLS)           96,770  0.9973   0.0156  -0.0149  0.9775   0.0242  -0.0242
+  FSL --wls vs DIPY WLS (default)               96,773  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  96,770  0.9999   0.0017  +0.0017  0.9999   0.0006  +0.0006
+Table 3. Estimator matched (MRtrix3 -iter 0)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL --wls vs MRtrix3 -iter 0                  96,773  1.0000   0.0000  -0.0000  1.0000   0.0000  -0.0000   LoA FA +/-0.0000, MD +/-0.0000
+  FSL --wls vs DIPY WLS (default)               96,773  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236   LoA FA +/-0.0286, MD +/-0.0355
+  MRtrix3 -iter 0 vs DIPY WLS (default)         96,773  0.9975   0.0140  -0.0133  0.9790   0.0237  -0.0236   LoA FA +/-0.0286, MD +/-0.0355
+Table 4. DIPY's WLS with each source of weights, against FSL --wls (admissible in all three: 96,773 voxels)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  DIPY, predicted-signal weights (default)      96,773  0.9975   0.0140  +0.0133  0.9790   0.0237  +0.0236
+  DIPY, measured-signal weights (as FSL)        96,773  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000
+Table 5. Every estimator against FSL --wls, one voxel set admissible in all seven arms (96,770 voxels; SD of reference FA 0.1770)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff  MAE/SD
+  FSL default (OLS)                             96,770  0.9958   0.0114  +0.0023  0.9826   0.0220  +0.0220    0.06
+  MRtrix3 default (IWLS)                        96,770  0.9973   0.0156  +0.0149  0.9775   0.0242  +0.0242    0.09
+  MRtrix3 -iter 0                               96,770  1.0000   0.0000  +0.0000  1.0000   0.0000  +0.0000    0.00
+  DIPY WLS (default)                            96,770  0.9975   0.0140  +0.0133  0.9794   0.0237  +0.0236    0.08
+  DIPY NLLS                                     96,770  0.9986   0.0112  +0.0106  0.9886   0.0176  +0.0176    0.06
+  DIPY RESTORE                                  96,770  0.9983   0.0117  +0.0108  0.9877   0.0177  +0.0177    0.07
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  96,770  0.9975   0.0139  -0.0127  0.9983   0.0023  -0.0022    0.08
+  Defaults: FSL default (OLS) vs DIPY WLS (default)  96,770  0.9979   0.0125  -0.0110  0.9991   0.0018  -0.0016    0.07
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)  96,770  0.9999   0.0017  +0.0017  0.9999   0.0006  +0.0006    0.01
+Table 8. Mean difference before and after MP-PCA denoising (each on its own admissible voxels)
+  comparison                                     FA raw  FA den.   MD raw  MD den.    n raw   n den.
+  FSL --wls vs MRtrix3 default (IWLS)           -0.0149  -0.0092  -0.0242  -0.0140   96,770   96,769
+  FSL --wls vs DIPY WLS (default)               -0.0133  -0.0076  -0.0236  -0.0134   96,773   96,773
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  +0.0017  +0.0016  +0.0006  +0.0005   96,770   96,769
+Table 9. Inadmissible fits: white-matter voxels (% of white matter) / % of the whole brain
+  arm                       data                           any          lambda_min < 0          lambda_max > 3
+  FSL --wls                 raw              0 (0.00%) / 0.78%       0 (0.00%) / 0.78%       0 (0.00%) / 0.00%
+  MRtrix3 default (IWLS)    raw              3 (0.00%) / 0.49%       3 (0.00%) / 0.38%       0 (0.00%) / 0.17%
+  DIPY WLS (default)        raw              0 (0.00%) / 0.22%       0 (0.00%) / 0.00%       0 (0.00%) / 0.22%
+  FSL --wls                 denoised         0 (0.00%) / 0.65%       0 (0.00%) / 0.65%       0 (0.00%) / 0.00%
+  MRtrix3 default (IWLS)    denoised         4 (0.00%) / 0.51%       4 (0.00%) / 0.40%       0 (0.00%) / 0.14%
+  DIPY WLS (default)        denoised         0 (0.00%) / 0.20%       0 (0.00%) / 0.00%       0 (0.00%) / 0.20%
+
+====================================================================================================
+sherbrooke: 100,005 white-matter voxels
+  voxels each arm loses to the admissibility rule: FSL default (OLS) 3,157, FSL --wls 5,176, MRtrix3 default (IWLS) 3,206, MRtrix3 -iter 0 5,176, DIPY WLS (default) 1, DIPY NLLS 1, DIPY RESTORE 1, DIPY WLS, measured weights 0
+====================================================================================================
+Table 2. Weighted fits as usually set up
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL --wls vs MRtrix3 default (IWLS)           94,781  0.9727   0.0330  +0.0017  0.9420   0.0863  -0.0863
+  FSL --wls vs DIPY WLS (default)               94,828  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  96,799  0.9999   0.0026  +0.0026  1.0000   0.0005  +0.0005
+Table 3. Estimator matched (MRtrix3 -iter 0)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  FSL --wls vs MRtrix3 -iter 0                  94,829  1.0000   0.0000  -0.0000  1.0000   0.0000  +0.0000   LoA FA +/-0.0000, MD +/-0.0000
+  FSL --wls vs DIPY WLS (default)               94,828  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858   LoA FA +/-0.0901, MD +/-0.0863
+  MRtrix3 -iter 0 vs DIPY WLS (default)         94,828  0.9724   0.0332  +0.0043  0.9433   0.0858  -0.0858   LoA FA +/-0.0901, MD +/-0.0863
+Table 4. DIPY's WLS with each source of weights, against FSL --wls (admissible in all three: 94,828 voxels)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff
+  DIPY, predicted-signal weights (default)      94,828  0.9724   0.0332  -0.0043  0.9433   0.0858  +0.0858
+  DIPY, measured-signal weights (as FSL)        94,828  1.0000   0.0000  +0.0000  1.0000   0.0000  -0.0000
+Table 5. Every estimator against FSL --wls, one voxel set admissible in all seven arms (94,641 voxels; SD of reference FA 0.1964)
+  comparison                                         n    FA r   FA MAE  FA diff    MD r   MD MAE  MD diff  MAE/SD
+  FSL default (OLS)                             94,641  0.9658   0.0372  -0.0036  0.9426   0.0859  +0.0859    0.19
+  MRtrix3 default (IWLS)                        94,641  0.9725   0.0330  -0.0018  0.9421   0.0862  +0.0862    0.17
+  MRtrix3 -iter 0                               94,641  1.0000   0.0000  +0.0000  1.0000   0.0000  -0.0000    0.00
+  DIPY WLS (default)                            94,641  0.9722   0.0332  -0.0043  0.9433   0.0857  +0.0857    0.17
+  DIPY NLLS                                     94,641  0.9841   0.0250  -0.0047  0.9724   0.0618  +0.0618    0.13
+  DIPY RESTORE                                  94,641  0.9812   0.0267  -0.0033  0.9708   0.0621  +0.0621    0.14
+  Defaults: FSL default (OLS) vs MRtrix3 default (IWLS)  94,641  0.9947   0.0143  -0.0018  0.9997   0.0013  -0.0003    0.07
+  Defaults: FSL default (OLS) vs DIPY WLS (default)  94,641  0.9947   0.0141  +0.0007  0.9998   0.0013  +0.0002    0.07
+  Defaults: MRtrix3 default (IWLS) vs DIPY WLS (default)  94,641  0.9999   0.0025  +0.0025  1.0000   0.0005  +0.0005    0.01
+Table 8. Mean difference before and after MP-PCA denoising (each on its own admissible voxels)
+  comparison                                     FA raw  FA den.   MD raw  MD den.    n raw   n den.
+  FSL --wls vs MRtrix3 default (IWLS)           +0.0017  -0.0013  -0.0863  -0.0362   94,781   96,209
+  FSL --wls vs DIPY WLS (default)               +0.0043  -0.0000  -0.0858  -0.0360   94,828   96,234
+  MRtrix3 default (IWLS) vs DIPY WLS (default)  +0.0026  +0.0013  +0.0005  +0.0002   96,799   96,827
+Table 9. Inadmissible fits: white-matter voxels (% of white matter) / % of the whole brain
+  arm                       data                           any          lambda_min < 0          lambda_max > 3
+  FSL --wls                 raw          5,176 (5.18%) / 7.28%   5,176 (5.18%) / 6.28%       0 (0.00%) / 1.01%
+  MRtrix3 default (IWLS)    raw          3,206 (3.21%) / 7.39%   3,201 (3.20%) / 3.39%       5 (0.00%) / 4.00%
+  DIPY WLS (default)        raw              1 (0.00%) / 3.91%       0 (0.00%) / 0.00%       1 (0.00%) / 3.91%
+  FSL --wls                 denoised     3,771 (3.77%) / 5.60%   3,771 (3.77%) / 4.07%       0 (0.00%) / 1.53%
+  MRtrix3 default (IWLS)    denoised     3,178 (3.18%) / 5.95%   3,178 (3.18%) / 3.26%       0 (0.00%) / 2.70%
+  DIPY WLS (default)        denoised         0 (0.00%) / 2.67%       0 (0.00%) / 0.00%       0 (0.00%) / 2.67%
