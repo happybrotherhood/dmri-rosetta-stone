@@ -176,11 +176,11 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 
 ## S6. Acquisition parameters, voxel set and noise distribution
 
-**Supplementary Table S8. Acquisition parameters of the two main datasets.** From Rokem et al. (2015) for Stanford; the Sherbrooke dataset has no acquisition paper, and "not documented" marks the parameters its distribution does not record. Neither dataset documents its parallel-imaging factor, partial-Fourier factor or reconstruction.
+**Supplementary Table S8. Acquisition parameters of the two main datasets.** From Rokem et al. (2015) for Stanford. The Sherbrooke dataset has no acquisition paper; its field strength and vendor were stated by one of its authors on the DIPY mailing list (July 2015), and "not documented" marks the parameters no source records. Neither dataset documents its parallel-imaging factor, partial-Fourier factor or reconstruction.
 
 | Parameter | Stanford HARDI | Sherbrooke 3-shell |
 |---|---|---|
-| Scanner | 3 T GE Discovery MR750 | not documented |
+| Scanner | 3 T GE Discovery MR750 | 1.5 T Siemens (M. Descoteaux, DIPY mailing list, July 2015); model not documented |
 | Head coil | 32-channel | not documented |
 | Sequence | twice-refocused spin-echo EPI | not documented |
 | TE / TR | 93.6 ms / not reported | not documented |
@@ -223,15 +223,15 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 |---|---|---|---|---|
 | Default estimator | OLS | WLS, then 2 IWLS reweightings | WLS, weights from an OLS-predicted signal | documented; tested |
 | Weighted option | `--wls`: weights = squared measured signal | `-iter 0`: stops after the measured-signal WLS step | `fit_method`; weights can be supplied | tested: the three agree in white matter (Tables 3 and 4) |
-| Floor applied to the signal before the log | 1 in white matter; behaviour in low-signal voxels not reproduced by any floor tested | 10⁻⁶ × the voxel's maximum signal | 10⁻⁴ | MRtrix3 and DIPY documented and tested; FSL tested in white matter only |
-| Measurements ≤ 0 | raised to the floor | raised to the floor | raised to the floor | as above |
+| Floor applied to the signal before the log | an initial fit gives S₀; measurements below 1% of S₀ are set to 1% of S₀, and the fit is repeated (`fdt/dtifit.cc`) | 10⁻⁶ × the voxel's maximum signal | 10⁻⁴ | documented and tested: FSL's rule reproduces `dtifit` over the whole brain (see below) |
+| Measurements ≤ 0 | log set to 0 in the initial fit, weight set to 1 in `--wls`, then raised to 1% of S₀ | raised to the floor | raised to the floor | documented (FSL source) and tested |
 | Negative eigenvalues | reported unchanged | reported unchanged | clipped to a small positive value before FA and MD | tested |
 | Frame of the stored tensor | FSL voxel frame, x reversed for images with a positive determinant | scanner coordinates | the frame of the b-vectors supplied | tested: FSL's Dxy and Dxz change sign relative to MRtrix3's, Dyz does not |
 | Order of the stored components | Dxx Dxy Dxz Dyy Dyz Dzz | Dxx Dyy Dzz Dxy Dxz Dyz | 3 × 3 matrix | documented |
 | b-value scaling by b-vector norm | none | applied when b-vectors are not unit length | none | not relevant here: every b-vector has norm 1.00000 ± 0.00001 |
 | Precision of the stored maps | float32 | float32 | float64 in memory, float32 as written here | tested |
 
-In FAST white matter, FSL `--wls` and MRtrix3 `-iter 0` agree in FA, MD and all six tensor components with median absolute differences below 10⁻⁷ and 1 − r of about 10⁻¹¹, the resolution of the float32 maps. Over the whole brain mask on Stanford, 3.6% of voxels differ by more than 0.001 in FA (maximum 0.20); they lie outside white matter and 78% contain a measurement below half the noise SD. Refitting them with the reimplemented estimator reproduces MRtrix3's values through its documented floor (mean absolute FA difference 0.0008), whereas FSL's values are reproduced neither by a floor of 1, nor by no floor, nor by single-precision arithmetic, and FSL's eigenvalues differ from MRtrix3's in these voxels (mean 0.24 µm²/ms), so the difference arises in the fit. Which step of `dtifit` causes it could not be determined from the documentation. On Sherbrooke, ten brain voxels differ by more than 0.001.
+In FAST white matter, FSL `--wls` and MRtrix3 `-iter 0` agree in FA, MD and all six tensor components with median absolute differences below 10⁻⁷ and 1 − r of about 10⁻¹¹, the resolution of the float32 maps. Over the whole brain mask on Stanford, 3.6% of voxels (6,687) differ by more than 0.001 in FA (maximum 0.20); they lie outside white matter and 78% contain a measurement below half the noise SD. The cause is the signal floor. `dtifit` first fits the tensor with the logarithm of non-positive measurements set to zero, takes S₀ from that fit, replaces every measurement below 1% of S₀ by 1% of S₀, and fits again; `dwi2tensor` floors at 10⁻⁶ of the voxel's maximum. All 6,687 differing voxels are voxels in which FSL's floor binds (it binds in 13% of brain voxels and in 218 white matter voxels). A reimplementation with FSL's rule reproduces `dtifit --wls` over the whole brain to a mean absolute FA difference of 0.00013 and `dtifit` (OLS) to 0.00013; the 517 voxels that still differ by more than 0.001 all contain a measurement at or below zero, which the two steps of `dtifit` treat differently from one another. On Sherbrooke, ten brain voxels differ by more than 0.001, all with a non-positive measurement.
 
 **Supplementary Table S12. Implementation agreement and inadmissible fits in detail.** Top: quantiles of the absolute difference between FSL `--wls` and MRtrix3 `-iter 0` in FA, MD (µm²/ms) and the six tensor components (µm²/ms, in a common frame), over FAST white matter voxels admissible in both. Middle: inadmissible fits by type for every arm, as a percentage of brain-mask voxels and of white matter voxels, including DIPY's WLS fit before its eigenvalue clipping (recovered with the reimplemented estimator, which reproduces DIPY's clipped FA to 10⁻⁷). Bottom: where the inadmissible voxels of the Table 2 arms lie.
 
