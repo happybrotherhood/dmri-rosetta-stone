@@ -26,6 +26,8 @@ pandoc highlights_jnm.md -f markdown-smart -o "$OUT/highlights.docx" \
     --reference-doc=templates/reference_highlights.docx
 pandoc cover_letter_jnm.md -f markdown-smart -o "$OUT/cover_letter.docx" \
     --reference-doc=templates/reference_highlights.docx
+pandoc response_to_reviewers_jnm.md -f markdown-smart -o "$OUT/response_to_reviewers.docx" \
+    --reference-doc=templates/reference_highlights.docx
 
 "$PY" scripts/polish_docx.py "$OUT/manuscript.docx" "$OUT/supplementary.docx"
 echo "built $OUT/"
