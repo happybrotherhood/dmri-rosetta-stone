@@ -114,7 +114,7 @@ Each of the 38 MASiVar scans was fitted by the five linear arms with one shared 
 
 ### Execution environment
 
-All three toolkits ran in one Docker container (Merkel, 2014) that pins FSL 6.0.7, MRtrix3 3.0.8 and DIPY 1.12.1 with Python 3.12. The container fixes the versions, which matters because defaults can change between releases, and lets every result be regenerated with the commands listed in Supplementary Section S6. Every results table is produced by a script in the repository.
+All three toolkits ran in one Docker container (Merkel, 2014) that pins FSL 6.0.7, MRtrix3 3.0.8 and DIPY 1.12.1 with Python 3.12. The container fixes the versions, which matters because defaults can change between releases, and lets every result be regenerated with the commands listed in Supplementary Section S8. Every results table is produced by a script in the repository.
 
 ## Results
 
@@ -314,7 +314,7 @@ During the preparation of this work the author used Claude (Anthropic) to assist
 
 ## Data availability
 
-The source code, Dockerfile and analysis scripts are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under the MIT licence. The version reported here is archived on Zenodo as release v1.2.0, under the concept DOI 10.5281/zenodo.22106454. This DOI always resolves to the latest version and lists every archived release. The Stanford HARDI and Sherbrooke 3-shell datasets are distributed openly by the DIPY project at https://dipy.org and are retrieved by `scripts/fetch_sample_data.py`. The MASiVar scans are distributed on OpenNeuro as dataset ds003416 under a CC0 licence and are retrieved by `scripts/fetch_masivar.py`. No registration or credentials are needed to reproduce any result. Supplementary Section S6 lists the commands that regenerate every table.
+The source code, Dockerfile and analysis scripts are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under the MIT licence. The version reported here is archived on Zenodo as release v1.2.0, under the concept DOI 10.5281/zenodo.22106454. This DOI always resolves to the latest version and lists every archived release. The Stanford HARDI and Sherbrooke 3-shell datasets are distributed openly by the DIPY project at https://dipy.org and are retrieved by `scripts/fetch_sample_data.py`. The MASiVar scans are distributed on OpenNeuro as dataset ds003416 under a CC0 licence and are retrieved by `scripts/fetch_masivar.py`. No registration or credentials are needed to reproduce any result. Supplementary Section S8 lists the commands that regenerate every table.
 
 ## Acknowledgements
 

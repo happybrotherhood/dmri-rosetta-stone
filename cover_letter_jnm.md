@@ -5,34 +5,23 @@ busra.mutlu_ipek@kcl.ac.uk
 
 Dear Editor,
 
-I am pleased to submit the manuscript **"Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit"** for consideration as a Research Article in the *Journal of Neuroscience Methods*.
+Thank you for the opportunity to revise manuscript JNEUMETH-D-26-00997. I am submitting the revised version, now titled **"Estimator choice, not implementation, accounts for most of the difference in diffusion tensor fitting between FSL, MRtrix3 and DIPY"**, together with a point-by-point response to the two reviewers.
 
-## Why this work fits the journal
+I am grateful to both reviewers. Their comments led to four additions that strengthen the manuscript, and to one correction.
 
-The *Journal of Neuroscience Methods* publishes rigorous comparisons of methods. This manuscript is such a comparison. It is not a software paper. A container is used only as the apparatus that lets FSL, MRtrix3 and DIPY run on byte-identical data. All data are public, and every result can be regenerated.
+## What has changed
 
-## What the study shows
+- **A test-retest comparison (Reviewer 1).** All estimators were fitted to 38 repeated scans of the open MASiVar dataset, from one adult scanned within and between sessions and from five adults scanned on four scanners at three sites. The difference between weighting schemes is six to fifteen times the between-session variability of MD, and because it follows the SNR of each scan it raises between-scanner variability 1.6 to 1.9 times. The difference between the toolkit defaults is below test-retest variability. These results give the paper the practical relevance the reviewer asked for, and are new Table 10.
+- **Admissibility judged on the eigenvalues (both reviewers).** The reviewers were right that a rule on FA and MD does not exclude a tensor with a negative eigenvalue. The rule now applies to the eigenvalues, every table states how many voxels each arm loses, and the comparisons are made on white matter defined by a tissue segmentation, without any tensor fit. With the corrected rule, DIPY given measured-signal weights reproduces FSL exactly, and the one residual difference in the first version is traced to DIPY's clipping of negative eigenvalues.
+- **Robustness of the conclusion.** New simulations with crossing fibres and partial volume, with non-central χ noise, and with errors in the b-matrix, and new fits of the Sherbrooke b = 2000 s/mm² shell and of both shells together, show that the ranking of the estimators holds in every case, and that multi-shell input makes the toolkit defaults diverge as well.
+- **Accuracy and agreement kept apart.** The title and conclusions no longer claim that implementation differences do not exist. Agreement between implementations is presented as a control, accuracy is assessed only against synthetic truth, and the Discussion says what the real data can and cannot show, including the limits set by the noise model and by spatial systematic errors.
+- **Priority.** The Introduction now credits Salvador et al. (2005) for predicted-signal weighting and positions Veraart et al. (2013) as the study that quantified the cost of the alternative.
 
-- **FSL and MRtrix3 return the same tensor when given the same estimator** (r = 1.0000). The differences reported between these two toolkits are not due to implementation.
-- **The toolkits differ in the estimator they apply by default.** MRtrix3 and DIPY weight the fit by a predicted signal. FSL uses ordinary least squares, and its `--wls` option weights by the measured signal.
-- **Measured-signal weighting is the most biased scheme in MD.** In Rician-noise phantoms at SNR 10, it underestimated MD by 0.054 µm²/ms and FA by 0.026, while the other linear fits stayed within 0.007 of truth. Its MD bias grew with 1/SNR². In simulations of both real acquisition protocols, its MD bias was the largest in every condition.
+All numbers in the manuscript were regenerated on the new voxel set with the corrected rule. The main conclusions are unchanged. The structure of the tables is unchanged, and two tables were added.
 
-## Why it matters
+## Reproducibility
 
-Veraart et al. (2013) showed that measured-signal weights degrade accuracy. This manuscript shows which options of widely used toolkits still carry that bias. The command line does not reveal it. Because its MD bias depends on SNR, it can create apparent group differences when groups are scanned at different SNR. The practical message is simple: methods sections should report the estimator, not only the toolkit.
-
-## Questions a reviewer is likely to ask, and how the manuscript answers them
-
-1. **Are the toolkits simply implemented differently?** No. With the estimator matched, FSL and MRtrix3 agree at r = 1.0000 (Table 3).
-2. **Is the weighting scheme really the cause?** Yes. Swapping the weights inside DIPY removes almost all of its difference from FSL (Table 4).
-3. **Is the finding limited to weighted linear fits?** No. In MD, OLS, IWLS, non-linear least squares and RESTORE all differ from the measured-signal fit in the same direction (Table 5).
-4. **Which scheme is accurate?** Phantoms with known eigenvalues and Rician noise, at three SNR levels, answer this directly (Table 6). Simulations on both real gradient tables show that the MD result holds on each protocol, while the FA result depends on the protocol (Supplementary Table S3).
-5. **Could a few non-physical fits distort the statistics?** They would, so they were excluded. All statistics use physically admissible voxels only, and the number of non-physical fits is reported (Table 9).
-6. **Does noise explain the real-data differences?** Largely. Noise was added to each voxel's own fitted tensor, at the noise level measured on the Stanford b = 0 volumes. It reproduces 89–106% of the FA offsets and 80–91% of the MD offsets, depending on how non-physical fits are treated (Table 7; Supplementary Table S6). It falls short in Stanford's most anisotropic voxels, where the residuals show the pattern expected of single-tensor misfit. I found no gradient-table error or signal dropout, and the remaining offsets are reported as a limitation.
-
-## Openness and reproducibility
-
-The code, container definition and analysis scripts are available on GitHub under the MIT licence and archived on Zenodo (concept DOI 10.5281/zenodo.22106454). Both datasets are distributed openly by the DIPY project and need no credentials. The Supplementary Material lists the commands that regenerate every table.
+The code, container definition and analysis scripts are available on GitHub under the MIT licence and archived on Zenodo (concept DOI 10.5281/zenodo.22106454). All three datasets are open and need no credentials. The Supplementary Material lists the commands that regenerate every table.
 
 ## Declarations
 
@@ -42,7 +31,7 @@ The code, container definition and analysis scripts are available on GitHub unde
 - The work was carried out during a doctoral scholarship from the Republic of Türkiye Ministry of National Education (YLSY programme).
 - The use of generative AI is declared in the manuscript, as required by Elsevier.
 
-Thank you for considering this manuscript.
+Thank you for considering the revised manuscript.
 
 Yours sincerely,
 
