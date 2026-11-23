@@ -14,7 +14,7 @@
 
 **Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. MRtrix3 and DIPY weight by a predicted signal by default; FSL fits ordinary least squares, and its `--wls` option weights by the measured signal. That option gave MD 0.02 to 0.09 µm²/ms lower than every other estimator, with a bias that grew as SNR fell, and raised between-scanner MD variability 1.6 to 1.9 times. The three defaults differed by less than test-retest variability.
 
-**Comparison with existing methods.** Previous studies have documented variability between whole processing pipelines. In this study, the variability arising from the tensor fit is traced to one estimator, selected by a command-line option.
+**Comparison with existing methods.** Previous studies have documented variability between whole pipelines. In this study, the variability from the tensor fit is traced to one estimator, selected by a command-line option.
 
 **Conclusions.** For these toolkits and versions, the estimator, not the implementation, determines the result. The toolkit name does not identify the estimator; the estimator and the source of its weights do. Measured-signal weighting adds between-scanner variance that grows as SNR falls.
 
