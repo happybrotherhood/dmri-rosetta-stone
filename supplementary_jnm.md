@@ -504,7 +504,7 @@ python scripts/test_retest_analysis.py --source prequal -> test_retest_b1000_pre
 
 ![](figures/revision/figS_inadmissible_sherbrooke.png){width=16cm}
 
-**Supplementary Figure S5.** Where the inadmissible tensor fits lie, Sherbrooke 3-shell dataset. Four axial slices of the mean b = 0 image for the three arms of Table 2. Red: voxels in which an eigenvalue is negative. Blue: voxels in which the largest eigenvalue exceeds 3.0 µm²/ms. Gold: the outline of FAST white matter. The counts in the row labels are over the brain mask. DIPY shows no red voxels because it clips negative eigenvalues before computing FA and MD. The Stanford equivalent (`figures/revision/figS_inadmissible_stanford.png` in the repository) has few inadmissible voxels, almost all at the edge of the brain mask.
+**Supplementary Figure S5.** Where the two admissibility rules fail, Sherbrooke 3-shell dataset. Four axial slices of the mean b = 0 image for the three arms of Table 2. Red: voxels in which an eigenvalue is negative, the failures that matter for the comparison, because they occur inside white matter. Blue: voxels in which the largest eigenvalue exceeds 3.0 µm²/ms, the diffusivity of free water; these lie almost entirely in cerebrospinal fluid and the eyes, where noise pushes a true value near the bound over it, and almost never inside white matter. Gold: the outline of FAST white matter. The counts in the row labels are over the brain mask. DIPY shows no red voxels because it clips negative eigenvalues before computing FA and MD. The Stanford equivalent (`figures/revision/figS_inadmissible_stanford.png` in the repository) has few inadmissible voxels, almost all at the edge of the brain mask.
 
 ## Supplementary references
 
