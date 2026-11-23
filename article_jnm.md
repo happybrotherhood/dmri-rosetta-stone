@@ -10,13 +10,13 @@
 
 **Background.** Weighting a linear tensor fit by the measured signal biases it; weights from a predicted signal do not (Salvador et al., 2005; Veraart et al., 2013). Which toolkit configurations apply each scheme, and whether it matters next to test-retest variability, is unknown.
 
-**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on identical input from two open datasets and 38 test-retest scans, so only the estimator varied. Agreement was measured on white matter defined without any tensor fit, keeping only fits with admissible eigenvalues. The schemes were scored against phantoms and simulations with crossing fibres, partial volume and the real gradient tables.
+**New method.** We fitted tensors with FSL, MRtrix3 and DIPY on identical input from two open datasets and 38 test-retest scans, so only the estimator varied. Agreement was measured on white matter defined without any tensor fit, keeping only fits with admissible eigenvalues. The schemes were scored against phantoms and against simulations with crossing fibres and partial volume.
 
-**Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. The toolkits differ in their default estimator. MRtrix3 and DIPY weight by a predicted signal; FSL fits ordinary least squares, and its `--wls` option weights by the measured signal. That option gave MD 0.02 to 0.09 µm²/ms lower than every other estimator, with a bias that grew as SNR fell, and raised between-scanner MD variability 1.6 to 1.9 times. The three defaults differed by less than test-retest variability on one shell, and by up to 0.012 µm²/ms with two shells.
+**Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. The toolkits differ in their default estimator. MRtrix3 and DIPY weight by a predicted signal; FSL fits ordinary least squares, and its `--wls` option weights by the measured signal. That option gave MD 0.02 to 0.09 µm²/ms lower than every other estimator, with a bias that grew as SNR fell, and raised between-scanner MD variability 1.6 to 1.9 times. The three defaults differed by less than test-retest variability.
 
 **Comparison with existing methods.** Earlier work documents variability between whole pipelines; here it is traced to one estimator, set by a command-line flag.
 
-**Conclusions.** For these toolkits and versions, the estimator accounts for most of the difference. Methods sections should report the estimator and its weighting, not only the toolkit.
+**Conclusions.** For these toolkits and versions, the estimator, not the implementation, determines the result. The toolkit name does not identify the estimator; the estimator and the source of its weights do. Measured-signal weighting adds between-scanner variance that grows as SNR falls.
 
 **Keywords:** diffusion MRI; tensor fitting; weighted least squares; estimator bias; signal-to-noise ratio; test-retest variability; reproducibility
 
