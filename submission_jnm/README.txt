@@ -8,7 +8,7 @@ cover_letter.docx           letter to the editor
 manuscript.docx             main text with tables and figure captions; Times New
                             Roman 12pt, double-spaced, line and page numbers
 highlights.docx             required separate file: 5 points, each under 85 characters
-supplementary.docx          Supplementary Material: Sections S1-S8, Tables S1-S15,
+supplementary.docx          Supplementary Material: Sections S1-S8, Tables S1-S16,
                             with Figures S1-S5 embedded
 Figure1.tif                 design of the comparison
 Figure2.tif                 agreement with the estimator matched, Stanford HARDI

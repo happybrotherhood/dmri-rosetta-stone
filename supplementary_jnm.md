@@ -393,6 +393,32 @@ In FAST white matter, FSL `--wls` and MRtrix3 `-iter 0` agree in FA, MD and all 
 |  |  | scale +5% everywhere | SNR 20 | measured | −0.0047 | +0.0110 | −0.0234 | −0.0003 | −0.0030 |
 |  |  | scale −5% everywhere | SNR 20 | measured | −0.0022 | −0.0558 | −0.0197 | +0.0023 | +0.0002 |
 
+**Supplementary Table S16. Sherbrooke at b = 2000 s/mm² and with both shells.** Every arm against FSL `dtifit --wls`, and the defaults against one another, on FAST white matter admissible in all seven arms. The b = 1000 s/mm² rows repeat Table 5 of the main text for comparison. The difference is the arm minus the reference, or the first default minus the second. DW SNR is the mean diffusion-weighted signal of the shell over white matter divided by the MP-PCA σ. MD in µm²/ms.
+
+| Input (DW SNR) | Arm | FA mean | MD mean | FA r | FA MAE | FA difference | MD r | MD MAE | MD difference |
+|---|---|---|---|---|---|---|---|---|---|
+| b = 1000 (6.3) | FSL `--wls` | 0.4237 | 0.5230 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
+|  | FSL default (OLS) | 0.4201 | 0.6089 | 0.9658 | 0.0372 | −0.0036 | 0.9426 | 0.0859 | +0.0859 |
+|  | MRtrix3 default (IWLS) | 0.4220 | 0.6092 | 0.9725 | 0.0330 | −0.0018 | 0.9421 | 0.0862 | +0.0862 |
+|  | DIPY WLS (default) | 0.4194 | 0.6087 | 0.9722 | 0.0332 | −0.0043 | 0.9433 | 0.0857 | +0.0857 |
+|  | DIPY NLLS | 0.4190 | 0.5848 | 0.9841 | 0.0250 | −0.0047 | 0.9724 | 0.0618 | +0.0618 |
+|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9999 | 0.0025 | +0.0025 | 1.0000 | 0.0005 | +0.0005 |
+| b = 2000 (3.4) | FSL `--wls` | 0.3182 | 0.5196 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
+|  | FSL default (OLS) | 0.3370 | 0.6396 | 0.9124 | 0.0528 | +0.0188 | 0.9213 | 0.1199 | +0.1199 |
+|  | MRtrix3 default (IWLS) | 0.3507 | 0.6425 | 0.9343 | 0.0539 | +0.0325 | 0.9098 | 0.1229 | +0.1229 |
+|  | DIPY WLS (default) | 0.3438 | 0.6407 | 0.9320 | 0.0510 | +0.0256 | 0.9161 | 0.1210 | +0.1210 |
+|  | DIPY NLLS | 0.3327 | 0.6027 | 0.9627 | 0.0365 | +0.0145 | 0.9648 | 0.0831 | +0.0831 |
+|  | *Defaults:* FSL vs. MRtrix3 | | | 0.9782 | 0.0277 | −0.0137 | 0.9956 | 0.0041 | −0.0029 |
+|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9992 | 0.0069 | +0.0069 | 0.9991 | 0.0019 | +0.0018 |
+| b = 1000 + 2000 | FSL `--wls` | 0.3350 | 0.5400 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
+|  | FSL default (OLS) | 0.3298 | 0.6760 | 0.9484 | 0.0425 | −0.0052 | 0.8012 | 0.1386 | +0.1360 |
+|  | MRtrix3 default (IWLS) | 0.3492 | 0.6775 | 0.9704 | 0.0347 | +0.0142 | 0.8270 | 0.1377 | +0.1375 |
+|  | DIPY WLS (default) | 0.3479 | 0.6656 | 0.9691 | 0.0344 | +0.0129 | 0.8348 | 0.1261 | +0.1256 |
+|  | DIPY NLLS | 0.3411 | 0.6354 | 0.9831 | 0.0252 | +0.0061 | 0.9237 | 0.0955 | +0.0954 |
+|  | *Defaults:* FSL vs. MRtrix3 | | | 0.9793 | 0.0333 | −0.0194 | 0.8273 | 0.0456 | −0.0015 |
+|  | *Defaults:* FSL vs. DIPY | | | 0.9799 | 0.0325 | −0.0181 | 0.8657 | 0.0448 | +0.0104 |
+|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9996 | 0.0036 | +0.0013 | 0.9874 | 0.0119 | +0.0119 |
+
 ## S8. Reproducing every table
 
 All commands run inside the container from the repository root. First retrieve the datasets:
@@ -449,7 +475,7 @@ python scripts/sherbrooke_fa_diagnosis.py
 python scripts/noise_level_uncertainty.py
 # Tables S13, S14 and S15                             -> revision_simulations.txt
 python scripts/revision_simulations.py
-# Table 11                                            -> shell_comparison.txt
+# Table S16                                           -> shell_comparison.txt
 python scripts/shell_comparison.py
 # Table 10: fits of the MASiVar scans, then the analysis
 python scripts/fit_test_retest.py

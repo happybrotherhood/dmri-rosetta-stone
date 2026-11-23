@@ -114,10 +114,15 @@ def inadmissible_figure(subj):
                               fontsize=8)
             if r == 0:
                 ax.set_title(f"slice {z}", fontsize=9)
-    fig.suptitle(f"Inadmissible tensor fits — {DATASET_TITLES.get(subj, subj)}\n"
-                 "red: an eigenvalue < 0; blue: largest eigenvalue > 3.0 µm²/ms; "
-                 "gold: FAST white matter", fontsize=11, y=1.0)
-    fig.tight_layout()
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    handles = [Patch(facecolor=(0.85, 0.1, 0.1), label="an eigenvalue below zero"),
+               Patch(facecolor=(0.1, 0.4, 0.95), label="largest eigenvalue above 3.0 µm²/ms"),
+               Line2D([0], [0], color="gold", lw=1.5, label="FAST white matter (outline)")]
+    fig.suptitle(f"Inadmissible tensor fits, {DATASET_TITLES.get(subj, subj)}", fontsize=12, y=1.0)
+    fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=10, frameon=False,
+               bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout(rect=(0, 0.03, 1, 0.98))
     save(fig, f"figS_inadmissible_{subj}")
 
 

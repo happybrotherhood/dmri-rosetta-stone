@@ -204,7 +204,7 @@ On the same scans after the dataset's own preprocessing, the offset fell to 2.8 
 
 ### Multi-shell input strains the defaults as well
 
-At b = 2000 s/mm², where the Sherbrooke diffusion-weighted SNR is 3.4, the measured-signal fit gave MD 0.120 to 0.123 µm²/ms lower than the OLS, IWLS and predicted-signal arms, and 0.083 lower than NLLS (Table 11). The defaults agreed within 0.003 µm²/ms in MD, as at b = 1000 s/mm², but differed by up to 0.014 in FA.
+At b = 2000 s/mm², where the Sherbrooke diffusion-weighted SNR is 3.4, the measured-signal fit gave MD 0.120 to 0.123 µm²/ms lower than the OLS, IWLS and predicted-signal arms, and 0.083 lower than NLLS (Supplementary Table S16). The defaults agreed within 0.003 µm²/ms in MD, as at b = 1000 s/mm², but differed by up to 0.014 in FA.
 
 With the two shells together, the single-tensor model no longer describes the decay, and the weighting also decides how the two shells are balanced. The measured-signal fit stayed 0.126 to 0.138 µm²/ms below the other linear arms, and the three defaults, which agreed within 0.0005 µm²/ms on one shell, now differed by up to 0.012 µm²/ms in MD: MRtrix3's default exceeded DIPY's by 0.012 and FSL's OLS default exceeded DIPY's by 0.010. FSL `--wls` and MRtrix3 `-iter 0` agreed on every input.
 
@@ -521,32 +521,6 @@ Veraart J, Novikov DS, Christiaens D, Ades-aron B, Sijbers J, and Fieremans E (2
 | Spearman ρ, offset against b = 0 SNR (n = 34) | +0.34 | −0.31 | +0.95 | +0.65 |
 | Between-scanner CoV, three defaults | 3.20–3.26 | 3.36–3.40 | 2.93–3.07 | 3.04–3.07 |
 | Between-scanner CoV, measured-signal weighting | 2.80 | 3.26 | 5.72 | 4.75 |
-
-**Table 11. Sherbrooke at b = 2000 s/mm² and with both shells.** Every arm against FSL `dtifit --wls`, and the defaults against one another, on FAST white matter admissible in all seven arms. The b = 1000 s/mm² rows repeat Table 5 for comparison. The difference is the arm minus the reference, or the first default minus the second. DW SNR is the mean diffusion-weighted signal of the shell over white matter divided by the MP-PCA σ. MD in µm²/ms.
-
-| Input (DW SNR) | Arm | FA mean | MD mean | FA r | FA MAE | FA difference | MD r | MD MAE | MD difference |
-|---|---|---|---|---|---|---|---|---|---|
-| b = 1000 (6.3) | FSL `--wls` | 0.4237 | 0.5230 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
-|  | FSL default (OLS) | 0.4201 | 0.6089 | 0.9658 | 0.0372 | −0.0036 | 0.9426 | 0.0859 | +0.0859 |
-|  | MRtrix3 default (IWLS) | 0.4220 | 0.6092 | 0.9725 | 0.0330 | −0.0018 | 0.9421 | 0.0862 | +0.0862 |
-|  | DIPY WLS (default) | 0.4194 | 0.6087 | 0.9722 | 0.0332 | −0.0043 | 0.9433 | 0.0857 | +0.0857 |
-|  | DIPY NLLS | 0.4190 | 0.5848 | 0.9841 | 0.0250 | −0.0047 | 0.9724 | 0.0618 | +0.0618 |
-|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9999 | 0.0025 | +0.0025 | 1.0000 | 0.0005 | +0.0005 |
-| b = 2000 (3.4) | FSL `--wls` | 0.3182 | 0.5196 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
-|  | FSL default (OLS) | 0.3370 | 0.6396 | 0.9124 | 0.0528 | +0.0188 | 0.9213 | 0.1199 | +0.1199 |
-|  | MRtrix3 default (IWLS) | 0.3507 | 0.6425 | 0.9343 | 0.0539 | +0.0325 | 0.9098 | 0.1229 | +0.1229 |
-|  | DIPY WLS (default) | 0.3438 | 0.6407 | 0.9320 | 0.0510 | +0.0256 | 0.9161 | 0.1210 | +0.1210 |
-|  | DIPY NLLS | 0.3327 | 0.6027 | 0.9627 | 0.0365 | +0.0145 | 0.9648 | 0.0831 | +0.0831 |
-|  | *Defaults:* FSL vs. MRtrix3 | | | 0.9782 | 0.0277 | −0.0137 | 0.9956 | 0.0041 | −0.0029 |
-|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9992 | 0.0069 | +0.0069 | 0.9991 | 0.0019 | +0.0018 |
-| b = 1000 + 2000 | FSL `--wls` | 0.3350 | 0.5400 | 1.0000 | 0.0000 | 0.0000 | 1.0000 | 0.0000 | 0.0000 |
-|  | FSL default (OLS) | 0.3298 | 0.6760 | 0.9484 | 0.0425 | −0.0052 | 0.8012 | 0.1386 | +0.1360 |
-|  | MRtrix3 default (IWLS) | 0.3492 | 0.6775 | 0.9704 | 0.0347 | +0.0142 | 0.8270 | 0.1377 | +0.1375 |
-|  | DIPY WLS (default) | 0.3479 | 0.6656 | 0.9691 | 0.0344 | +0.0129 | 0.8348 | 0.1261 | +0.1256 |
-|  | DIPY NLLS | 0.3411 | 0.6354 | 0.9831 | 0.0252 | +0.0061 | 0.9237 | 0.0955 | +0.0954 |
-|  | *Defaults:* FSL vs. MRtrix3 | | | 0.9793 | 0.0333 | −0.0194 | 0.8273 | 0.0456 | −0.0015 |
-|  | *Defaults:* FSL vs. DIPY | | | 0.9799 | 0.0325 | −0.0181 | 0.8657 | 0.0448 | +0.0104 |
-|  | *Defaults:* MRtrix3 vs. DIPY | | | 0.9996 | 0.0036 | +0.0013 | 0.9874 | 0.0119 | +0.0119 |
 
 ## Figure captions
 
