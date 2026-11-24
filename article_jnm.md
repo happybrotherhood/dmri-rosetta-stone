@@ -20,7 +20,7 @@
 
 **Keywords:** diffusion MRI; tensor fitting; weighted least squares; estimator bias; signal-to-noise ratio; test-retest variability; reproducibility
 
-## Introduction
+## 1. Introduction
 
 Diffusion MRI (dMRI) sensitises the magnetic resonance signal to the microscopic motion of water molecules, and because this motion is constrained by the oriented structure of axon bundles, it provides the only non-invasive means of probing white matter microstructure in the living brain (Basser et al., 1994; Jones, 2010). The diffusion tensor was the first model to summarise this information in each voxel, and the two scalar measures derived from it, fractional anisotropy (FA) and mean diffusivity (MD), remain the most widely reported quantities in the field. They serve as markers of white matter integrity in studies of development, ageing and disease, and they are routinely compared between individuals, between groups and between imaging sites (Beaulieu, 2002; Jones, 2010). The reliability of these comparisons therefore depends on the step that turns raw measurements into a tensor: the tensor fit.
 
@@ -32,25 +32,25 @@ Whether the three toolkits follow this recommendation has not been examined. Eac
 
 This study addresses these questions with a controlled comparison in which the input data, the brain mask and the gradient table are held fixed and only the estimator varies. It makes three contributions. First, as a control, it establishes that FSL and MRtrix3 return the same tensor when given the same estimator, so that differences between the toolkits can be attributed to the estimator rather than to the code. Second, it maps which distributed configuration implements which weighting scheme, and finds that the only weighted option of FSL implements the scheme the literature advises against. Third, it measures the size of the resulting differences against test-retest variability on repeated scans from four scanners, and tests whether the conclusions hold with crossing fibres, partial volume, multi-shell input, non-Rician noise and errors in the b-matrix. All analyses use open data, and every value can be regenerated from the accompanying code.
 
-## Materials and methods
+## 2. Materials and methods
 
-### Data
+### 2.1. Data
 
 Two open datasets distributed by the DIPY project were analysed. Neither requires registration. The Stanford HARDI dataset (Rokem et al., 2015) was acquired on a 3 T GE Discovery MR750 with a 32-channel head coil and a twice-refocused spin-echo sequence. It has 10 b = 0 volumes and 150 directions at b = 2000 s/mm² (TE 93.6 ms), with 2 mm isotropic voxels and a matrix of 81 × 106 × 76. The Sherbrooke 3-shell dataset (Garyfallidis et al., 2014) has one b = 0 volume and 64 directions at each of b = 1000, 2000 and 3500 s/mm², with 2 mm isotropic voxels and a matrix of 128 × 128 × 60. It has no acquisition paper. Its distribution records no acquisition parameters; the only documented fact is that it was acquired on a 1.5 T Siemens scanner (M. Descoteaux, DIPY mailing list, July 2015). We used it as an independent acquisition rather than a characterised reference. For neither dataset are the parallel-imaging factor, the partial-Fourier factor or the reconstruction documented. Supplementary Table S8 lists what is known. The two datasets differ in site, protocol, b-value, angular sampling and number of b = 0 volumes, but not in voxel size.
 
-The main analysis used the b = 1000 s/mm² shell of the Sherbrooke data, extracted once together with the b = 0 volume (65 of 193 volumes) and given to every arm. Its b = 2000 s/mm² shell, and the two shells together, were analysed separately (see Multi-shell input). The Stanford data are single-shell and were used whole.
+The main analysis used the b = 1000 s/mm² shell of the Sherbrooke data, extracted once together with the b = 0 volume (65 of 193 volumes) and given to every arm. Its b = 2000 s/mm² shell, and the two shells together, were analysed separately (Section 2.9). The Stanford data are single-shell and were used whole.
 
-### Test-retest data
+### 2.2. Test-retest data
 
 To set the differences between estimators against how much a measure varies when the same person is scanned again, we used the MASiVar dataset (Cai et al., 2021a), distributed on OpenNeuro (ds003416) under a CC0 licence. Two of its cohorts were used. Cohort I is one adult scanned in three sessions on consecutive days on a 3 T Philips Achieva, with three or four scans per session (11 scans). Cohort II is five adults, each scanned on three or four scanners at three sites within one year, with one or two sessions per scanner (27 scans). The scanners are two Philips Achieva at site 1 (1A and 1B), a GE Discovery MR750 at site 2 and a Siemens Skyra at site 3. From each scan we took the 96-direction acquisition at b = 1000 s/mm², which contains its own b = 0 volume, so that each scan is a complete single-shell acquisition. Voxels are 2.5 mm isotropic, except on scanner 1A for Cohort II (1.9 × 1.9 × 2.2 mm) and at site 2, whose images are stored at 0.94 × 0.94 × 2.5 mm. The site 2 and site 3 scans contain ten and two b = 0 volumes. Unprocessed data were used, as for the two main datasets. The analysis was then repeated on the same scans as preprocessed by the dataset's own pipeline, PreQual (Cai et al., 2021b), which applies MP-PCA denoising, susceptibility, eddy-current and motion correction, and intensity normalisation. Using the dataset's preprocessing, rather than one chosen here, keeps the preprocessing outside the comparison.
 
-### Signal-to-noise ratio and noise level
+### 2.3. Signal-to-noise ratio and noise level
 
 SNR was measured rather than inferred from the protocol. The noise standard deviation σ was the median, over white matter, of the noise map from MRtrix3 `dwidenoise` (Marchenko–Pastur PCA, MP-PCA; Veraart et al., 2016), computed from each dataset's full series before shell selection. SNR is the mean signal of one b = 0 volume, or of the fitted shell, divided by σ. White matter is defined in the next section. The SNR of a single b = 0 volume was 35.8 for Stanford and 11.1 for Sherbrooke. The SNR of the fitted shell was 10.0 for Stanford (b = 2000 s/mm²) and 6.3 for Sherbrooke (b = 1000 s/mm²).
 
 The MP-PCA value was checked in three ways. On Stanford, which has ten b = 0 volumes, the SD across those volumes was divided by σ in each white matter voxel. The median ratio, corrected for the small-sample bias of the SD (dividing by 0.963), was 1.27, with a 95% bootstrap confidence interval over voxels of 1.26 to 1.27. The interval is narrow, but the ratio itself varies from voxel to voxel (interquartile range 1.04 to 1.53), because the SD across volumes also contains motion and physiological fluctuation. DIPY's PIESNO estimator (Koay et al., 2009) gave σ = 17.4 on Stanford, against 18.0 from MP-PCA. On Sherbrooke, PIESNO (15.1) and the magnitude of the background far from the head (15.9, after Rician correction) were both below the MP-PCA value in white matter (22.3), which is consistent with noise that varies across the image, as parallel imaging produces. The Sherbrooke background is also narrower than a Rayleigh distribution; its quantile ratios lie between those of one and two complex channels (Supplementary Table S9). The Stanford background cannot be examined, because 39% of its voxels outside the brain are exactly zero and the rest carry ghosting. The noise level and its distribution are therefore uncertain, and the simulations below are run at more than one noise level and with more than one noise model. Because σ varies across the image, the simulation on each voxel's own tensor adds noise at that voxel's own σ from the MP-PCA map rather than at one value for the whole image.
 
-### Comparison design
+### 2.4. Comparison design
 
 Figure 1 summarises the design. Each fitting configuration is called an arm. Every arm received identical input: the same unprocessed volumes, the same gradient table and one shared brain mask from DIPY `median_otsu`. No preprocessing was applied, because any preprocessing step is itself a toolkit-specific choice. Denoising was tested separately. The results describe the fitting stage, not a complete pipeline.
 
@@ -60,7 +60,7 @@ A tensor fit was admissible if all three eigenvalues were non-negative and the l
 
 For each pair of arms, we computed three statistics: the voxelwise Pearson correlation (r), the mean absolute error (MAE) and the Bland–Altman mean difference with 95% limits of agreement. MD is reported in µm²/ms.
 
-### Estimators compared
+### 2.5. Estimators compared
 
 Table 1 lists the arms. At their defaults, the three toolkits use three different estimators:
 
@@ -70,11 +70,11 @@ Table 1 lists the arms. At their defaults, the three toolkits use three differen
 
 Four non-default arms were added. FSL `dtifit --wls` is FSL's weighted option. MRtrix3 `dwi2tensor -iter 0` stops after the first, measured-signal step, so MRtrix3 and FSL can be compared on one estimator. DIPY's non-linear least squares (NLLS) and RESTORE (Chang et al., 2005) test whether a pattern is specific to weighted linear fits. Both used DIPY's defaults; for RESTORE, the noise level is estimated from the residuals. MRtrix3's final weights come from a predicted signal, so its default is grouped with the predicted-signal schemes. For every arm the three eigenvalues and the six tensor components were kept, so that admissibility could be judged on the eigenvalues and the implementations compared component by component. Supplementary Table S11 records the signal floor, the treatment of non-positive measurements, the tensor frame, the numerical precision and the eigenvalue handling of each toolkit.
 
-### Manipulating the weighting scheme
+### 2.6. Manipulating the weighting scheme
 
 This test asks whether the source of the weights, rather than the software, explains why DIPY differs. DIPY's WLS fit was run twice on the same data. The first run used its default predicted-signal weights. The second used the squared measured signal as weights. Each run was compared with FSL `dtifit --wls`. Signals were floored at 1 before both fits, so that a zero-valued voxel cannot make the weighted design matrix singular.
 
-### Accuracy against a known ground truth
+### 2.7. Accuracy against a known ground truth
 
 Agreement between toolkits does not show which one is accurate. We therefore built synthetic phantoms with known eigenvalues at SNR 30, 20 and 10. This range extends from slightly below the single-b = 0 SNR of the Stanford data to about that of the Sherbrooke data. Each 30 × 30 × 30-voxel phantom has three regions:
 
@@ -84,7 +84,7 @@ Agreement between toolkits does not show which one is accurate. We therefore bui
 
 The fitted scheme had 10 b = 0 volumes and 30 directions at b = 1000 s/mm². Noise was Rician, as in magnitude images from one channel (Gudbjartsson and Patz, 1995). Gaussian noise with standard deviation 1000/SNR was added to the real and imaginary channels, and the magnitude was taken. S₀ was 1000 in the fibre regions, so SNR is as stated there. The isotropic region had S₀ = 800, so its SNR was 24, 16 and 8. Two voxels were trimmed from each in-plane edge of the volume, and one slice from each end of every region. This left 5,408 scored voxels per region. The five linear-fit arms were scored: FSL default and `--wls`, MRtrix3 default and `-iter 0`, and DIPY WLS. For each, we report bias (estimate minus truth), its standard error across voxels, and root-mean-square error (RMSE). This phantom reproduces the test of Veraart et al. (2013) for the configurations the toolkits distribute.
 
-### Simulations on the real acquisition protocols
+### 2.8. Simulations on the real acquisition protocols
 
 The phantom has one tensor shape and one gradient scheme. The remaining simulations used the exact gradient tables given to the toolkits: 10 b = 0 volumes and 150 directions at b = 2000 s/mm² for Stanford, and one b = 0 volume and 64 directions at b = 1000 s/mm² for Sherbrooke. All used the toolkits' linear estimators reimplemented in NumPy, so that noise, voxels and single measurements could be controlled. The reimplementations include each toolkit's signal floor, MRtrix3's two reweightings and, for the DIPY arm only, DIPY's eigenvalue clipping. On the real data they matched the published maps of FSL `--wls`, MRtrix3's default and DIPY WLS to a mean absolute FA difference below 0.00001 in white matter on both datasets. FSL applies a further floor at 1% of the S₀ estimated by an initial fit (Supplementary Table S11); it binds only where the signal is very low, in 218 white matter voxels on Stanford, and the simulations below do not reach it. Each cell of every simulation had 10,000 voxels, random fibre orientations and its own random seed.
 
@@ -98,31 +98,31 @@ The phantom has one tensor shape and one gradient scheme. The remaining simulati
 
 *Errors in the b-matrix.* Gradient non-linearity and other spatial systematic errors make the effective b-matrix of a voxel differ from the nominal one (Krzyżak et al., 2024, 2025). Neither dataset provides the gradient-field information needed to correct this, and none was applied. To test whether such errors alter the comparison between estimators, the signal was generated with a per-voxel b-matrix that differed from the nominal one and fitted with the nominal one: b-value scale errors uniform within ±2% or ±5% across voxels, systematic scale errors of +5% and −5%, and gradient directions tilted by a random angle with SD 1° or 3°. Each was run without noise and at SNR 20, and the bias with both noise and error was compared with the sum of the two biases alone.
 
-### Multi-shell input
+### 2.9. Multi-shell input
 
 FSL `dtifit`, MRtrix3 `dwi2tensor` and DIPY's `TensorModel` all fit every volume they receive. The main analysis gave them one shell, because the single-tensor model does not describe the signal decay across shells at these b-values, and the choice of shell is then separated from the choice of estimator. To test how the estimators behave when the model is strained, all seven arms were also fitted to the Sherbrooke b = 2000 s/mm² shell alone, which is the b-value of the Stanford data, and to the b = 1000 and 2000 s/mm² shells together (129 volumes).
 
-### Sensitivity to denoising
+### 2.10. Sensitivity to denoising
 
 We repeated the comparison of Table 2 on denoised data. MRtrix3 `dwidenoise` (MP-PCA; Veraart et al., 2016) was applied once to the full series, before shell selection. The denoised data were given to every arm, so the estimator remained the only variable. Giving each toolkit its own denoiser would not have been fairer: FSL has none, so it would have fitted noisier data. Eddy-current and motion correction were not tested on these two datasets; their effect is covered by the preprocessed test-retest data.
 
-### Test-retest analysis
+### 2.11. Test-retest analysis
 
 Each of the 38 MASiVar scans was fitted by the five linear arms with one shared `median_otsu` brain mask, and each arm's FA and MD were averaged over the scan's white matter: voxels with FA above 0.2 and an admissible tensor in all five arms. For a fixed estimator, variability was measured as a coefficient of variation (CoV, SD divided by the mean): within session and between sessions in Cohort I; between repeat sessions on the same scanner, between scanners within a subject, and between subjects on the same scanner in Cohort II. The difference between estimators was measured on the same scans as the mean difference of one arm from another, as a percentage of the mean. Because a constant offset would cancel in any study that uses one estimator, the offset was also examined as it varied: its spread across scans, its mean on each scanner, and the change it made to between-scanner variability. The SNR of each scan was the mean b = 0 signal over white matter divided by the median MP-PCA σ, and was left undefined for the four site 2 scans stored at an interpolated resolution, where MP-PCA returns no noise estimate.
 
-### Execution environment
+### 2.12. Execution environment
 
 All three toolkits ran in one Docker container (Merkel, 2014) that pins FSL 6.0.7, MRtrix3 3.0.8 and DIPY 1.12.1 with Python 3.12. The container fixes the versions, which matters because defaults can change between releases, and lets every result be regenerated with the commands listed in Supplementary Section S8. Every results table is produced by a script in the repository.
 
-## Results
+## 3. Results
 
-### As usually configured, the weighted fits set FSL apart from the other two toolkits
+### 3.1. As usually configured, the weighted fits set FSL apart from the other two toolkits
 
 We first compared the weighted fits as they are usually configured (Table 2). FSL was run with `--wls`, its weighted option. MRtrix3 and DIPY were run at their defaults, which both weight. MRtrix3 and DIPY agreed closely (FA r = 0.9999 on both datasets; MD within 0.0006 µm²/ms). FSL differed from both (FA r = 0.9973 to 0.9975 on Stanford and 0.9724 to 0.9727 on Sherbrooke). On this comparison alone, FSL appears to differ from the other two toolkits.
 
 The offsets did not behave like an implementation difference. FSL's MD was lower on both datasets, by 0.024 µm²/ms on Stanford and 0.086 µm²/ms on Sherbrooke. Its FA offset, however, changed sign: FSL was 0.015 lower than MRtrix3 on Stanford and 0.002 higher on Sherbrooke. This inconsistency motivated the analyses that follow.
 
-### Given the same estimator, FSL and MRtrix3 return the same tensor
+### 3.2. Given the same estimator, FSL and MRtrix3 return the same tensor
 
 MRtrix3's default is not a single weighted fit. It is WLS followed by two IWLS iterations. The comparison above set reweighting against a single weighted fit, and attributed the result to the toolkit.
 
@@ -130,7 +130,7 @@ Constraining MRtrix3 to one weighted fit (`-iter 0`) reversed the grouping (Tabl
 
 The agreement is not exact in every voxel of the brain, and the exception has a known cause. On Stanford, 3.6% of voxels inside the brain mask differed by more than 0.001 in FA, with a largest difference of 0.20. These voxels lie outside white matter and 78% of them contain a measurement below half the noise SD. The two programs floor the signal differently before taking its logarithm: MRtrix3 at 10⁻⁶ of the voxel's maximum, FSL at 1% of the S₀ estimated by an initial fit (Supplementary Table S11). Every one of the 6,687 differing voxels is a voxel in which FSL's floor binds, and a reimplementation with FSL's rule reproduces its values there to a mean absolute FA difference of 0.00002. On Sherbrooke, ten brain voxels differed by more than 0.001. Two separately developed implementations of the same closed-form estimator therefore return the same tensor wherever the signal exceeds 1% of S₀, and where it does not, the difference is a documented choice of floor, not an error.
 
-### What separates DIPY is the source of its weights
+### 3.3. What separates DIPY is the source of its weights
 
 DIPY differs from both even when MRtrix3 is matched to FSL. MRtrix3 documents its first step as weighted by the measured signal. FSL `--wls` reproduces that step, so it also uses measured-signal weights. DIPY, in contrast, takes its weights from a signal predicted by a preliminary OLS fit.
 
@@ -142,7 +142,7 @@ The arms therefore group by the source of their weights, not by software (Tables
 
 We tested this grouping directly by changing the weights inside DIPY (Table 4). With measured-signal weights, DIPY's FA difference from FSL fell from an MAE of 0.0140 to 0.0000 on Stanford and from 0.0332 to 0.0000 on Sherbrooke, and its MD difference fell from 0.0237 and 0.0858 µm²/ms to 0.0000. Once inadmissible fits are excluded, DIPY with measured-signal weights reproduces FSL `--wls` exactly. The small residual reported in the first version of this analysis came from DIPY's clipping of negative eigenvalues, which the admissibility rule now removes from both arms. Changing one argument inside one toolkit removed the whole of the difference attributed to the choice of toolkit.
 
-### In MD, measured-signal weighting differs from every other estimator
+### 3.4. In MD, measured-signal weighting differs from every other estimator
 
 Table 5 compares every arm with the measured-signal fit, on one voxel set per dataset.
 
@@ -152,7 +152,7 @@ In FA, the differences were smaller. The other estimators differed from the meas
 
 The comparison within FSL shows the practical size of this effect. Switching `dtifit` from its default to `--wls` changed MD by 0.022 µm²/ms on Stanford and 0.086 µm²/ms on Sherbrooke. Replacing FSL `--wls` with MRtrix3 at the same estimator changed nothing. A single option within one toolkit changes the result more than a change of toolkit at a fixed estimator.
 
-### Against ground truth, measured-signal weighting is the most biased scheme
+### 3.5. Against ground truth, measured-signal weighting is the most biased scheme
 
 The phantoms showed which estimator is accurate (Table 6; Figure 4A).
 
@@ -166,11 +166,11 @@ Measured-signal weighting also had a higher RMSE than predicted-signal weighting
 
 The phantom has ten b = 0 volumes, so we repeated the comparison in simulations on the two real gradient tables (Supplementary Table S3). There, measured-signal weighting had the largest MD bias and the largest MD RMSE of the four linear estimators in every condition. In FA, the result depended on the protocol. On the Stanford table, it had the largest FA bias in every condition. On the Sherbrooke table, with one b = 0 volume and b = 1000 s/mm², noise raised FA in most conditions, especially at low FA, and the negative bias of measured-signal weighting partly offset this rise, so its absolute FA bias was smaller than that of predicted-signal weighting in 21 of 30 conditions.
 
-### The conclusion holds with crossing fibres and partial volume
+### 3.6. The conclusion holds with crossing fibres and partial volume
 
 Where no single tensor is correct, each estimator was scored against its own fit to the noise-free signal (Supplementary Table S13). In all nine scenarios, at every SNR and on both protocols, measured-signal weighting had the largest MD bias and the largest MD RMSE. On the Stanford table at SNR 20, its MD bias was −0.054 µm²/ms for one fibre, −0.027 for two fibres crossing at 90° and −0.149 for the fibre with 50% free water; the predicted-signal arm's bias in the same cases was −0.004, −0.0003 and −0.031. The offset between the two weighting schemes grew with the free-water fraction, from −0.050 to −0.118 µm²/ms, because free water lowers the diffusion-weighted signal and with it the effective SNR. In FA, measured-signal weighting had the largest bias in every scenario at SNR 20 and 30. Crossing fibres and partial volume change the value every estimator converges to, but not the ranking of the estimators.
 
-### Noise on the real tensors reproduces most of the offsets
+### 3.7. Noise on the real tensors reproduces most of the offsets
 
 The single-b = 0 SNR of the two datasets, 35.8 and 11.1, spans the phantom range. The MD offset between the weighting groups was about three times larger on Sherbrooke (−0.089 against −0.026 µm²/ms over the voxels of this analysis). We tested whether noise explains the offsets (Table 7; Figure 4B and C).
 
@@ -184,15 +184,15 @@ Checks of the real residuals found no pipeline error and no signal dropout (Supp
 
 Denoising reduced the real-data offsets but did not remove them (Table 8). The MD offset between FSL `--wls` and MRtrix3's default fell by 42% on Stanford and by 58% on Sherbrooke. The FA offset shrank on both datasets, and the small difference between MRtrix3 and DIPY changed little.
 
-### The noise floor affects every estimator
+### 3.8. The noise floor affects every estimator
 
 The simulations above assume Rician noise, that is, magnitude images from one channel. Reconstructions that combine several channels raise the noise floor, and the Sherbrooke background suggests such a reconstruction (Materials and methods). With non-central χ noise from 4 and 8 channels at the same per-channel σ, every estimator underestimated MD, and this shared bias exceeded the difference between weighting schemes (Supplementary Table S14). On the Stanford table at SNR 20 and true FA 0.45, the MD bias of the predicted-signal arm went from −0.001 µm²/ms with one channel to −0.064 with four and −0.122 with eight, while the offset between measured- and predicted-signal weighting shrank from −0.041 to −0.026 and −0.017 and kept its sign. The Sherbrooke table behaved the same way. At low SNR, the choice of estimator does not compensate for the noise floor, and no linear estimator is accurate.
 
-### Errors in the b-matrix do not change the comparison
+### 3.9. Errors in the b-matrix do not change the comparison
 
 With the signal generated under a b-matrix that differed from the nominal one and fitted with the nominal one, scale errors that vary from voxel to voxel (uniform within ±2% or ±5%) and gradient tilts with SD 1° or 3° changed no arm's bias by more than 0.001 (Supplementary Table S15). A systematic scale error of ±5% shifted the MD of every arm by ±0.035 µm²/ms, that is, by 5% of MD, and shifted FA by less than 0.002. The interaction between this error and the weighting bias was 0.005 to 0.009 µm²/ms at SNR 20, so the two effects are not exactly additive, but the ranking of the estimators and the sign of their differences were unchanged in every case.
 
-### The estimator offset exceeds test-retest variability and varies with the scanner
+### 3.10. The estimator offset exceeds test-retest variability and varies with the scanner
 
 On the 38 MASiVar scans fitted without preprocessing (Table 10; Figure 3), FSL `--wls` and MRtrix3 `-iter 0` again returned the same tensor in every scan. The MD of the measured-signal fit was 8.5 to 9.0% lower than that of the other three linear arms, with a range of 3.1 to 15.0% across scans. The three toolkit defaults differed from one another by 0.05 to 0.44% in MD. For a fixed estimator, MD varied by 0.9 to 1.4% within a session, by 0.6 to 1.5% between sessions and by 1.2 to 1.5% between subjects on one scanner. The difference between estimators was therefore six to fifteen times the between-session variability, and the difference between defaults was below it. In FA the estimator offset was 1.1 to 1.3%, larger than the between-session variability (0.2 to 0.4%) but smaller than the between-scanner (2.8 to 3.3%) and between-subject (2.6 to 2.7%) variability.
 
@@ -200,21 +200,21 @@ The offset was not constant. Across scans its SD was 0.025 µm²/ms (3.2% of MD)
 
 On the same scans after the dataset's own preprocessing, the offset fell to 2.8 to 2.9% of MD (range 0.3 to 6.6%), the defaults differed by 0.03 to 0.10%, and the between-scanner CoV of MD was 4.8% with measured-signal weighting against 3.0 to 3.1% with the defaults, a factor of 1.6 (Table 10). The per-scanner offsets were −0.035, −0.016, −0.009 and −0.006 µm²/ms, a spread of 4.0% of MD, and the correlation with SNR remained (ρ = 0.65). In FA, preprocessing reduced the offset to 0.4 to 0.6%, below the within-session variability, and the between-scanner CoV was unchanged by the estimator.
 
-### Multi-shell input also separates the defaults
+### 3.11. Multi-shell input also separates the defaults
 
 At b = 2000 s/mm², where the Sherbrooke diffusion-weighted SNR is 3.4, the measured-signal fit gave MD 0.120 to 0.123 µm²/ms lower than the OLS, IWLS and predicted-signal arms, and 0.083 lower than NLLS (Supplementary Table S16). The defaults agreed within 0.003 µm²/ms in MD, as at b = 1000 s/mm², but differed by up to 0.014 in FA.
 
 With the two shells together, the single-tensor model no longer describes the decay, and the weighting also decides how the two shells are balanced. The measured-signal fit stayed 0.126 to 0.138 µm²/ms below the other linear arms, and the three defaults, which agreed within 0.0005 µm²/ms on one shell, now differed by up to 0.012 µm²/ms in MD: MRtrix3's default exceeded DIPY's by 0.012 and FSL's OLS default exceeded DIPY's by 0.010. FSL `--wls` and MRtrix3 `-iter 0` agreed on every input.
 
-### Inadmissible tensor fits
+### 3.12. Inadmissible tensor fits
 
 The arms differed in how often they returned inadmissible fits (Table 9). On Stanford, almost no white matter voxel was inadmissible in any arm; the inadmissible fits lay at the edge of the brain mask (91 to 99% within two voxels of it) in 0.2 to 0.8% of brain voxels. On Sherbrooke, the measured-signal fit returned a negative eigenvalue in 5.2% of white matter voxels, MRtrix3's default in 3.2% and FSL's OLS default in 3.2%; most of these voxels lie in clusters of ten or more, half of them in or next to cerebrospinal fluid, and half contain a measurement below half the noise SD (Supplementary Figure S5). Denoising reduced the rate of the measured-signal fit to 3.8%.
 
 DIPY's WLS fit returned no negative eigenvalue in any run, because it replaces them with a small positive value before computing FA and MD. Before that step, the same fit has a negative eigenvalue in 3.1% of Sherbrooke white matter voxels, the rate of FSL's OLS default (Supplementary Table S12). DIPY's zero count reflects an implementation choice rather than a better fit, and it is the one implementation difference between the toolkits that changes values in white matter. The rate of inadmissible fits tracked acquisition quality: over the whole brain mask it was 9 to 15 times higher on Sherbrooke than on Stanford for the two arms that report negative eigenvalues.
 
-## Discussion
+## 4. Discussion
 
-### What the toolkit label does and does not specify
+### 4.1. What the toolkit label does and does not specify
 
 The central result is that FSL and MRtrix3 return the same tensor when given the same estimator. In white matter, two separately developed implementations agree in FA, MD and every tensor component to the precision of their output files, on two datasets, three shell selections, denoised data and 38 test-retest scans. For these two toolkits and versions, implementation is not what separates them.
 
@@ -226,11 +226,11 @@ This result changes the meaning of "software-related variability" for the tensor
 
 The title refers to most of the difference rather than all of it, for two reasons. DIPY replaces negative eigenvalues with a small positive value before computing FA and MD, and FSL and MRtrix3 do not. This is an implementation choice, and on Sherbrooke it changes values in 3% of white matter voxels. And in voxels with very low signal outside white matter, FSL and MRtrix3 differ because they floor the signal differently, FSL at 1% of S₀ and MRtrix3 at 10⁻⁶ of the voxel maximum (Supplementary Table S11). Neither affects the comparison in white matter once inadmissible fits are excluded, but both are implementation differences, and the title and conclusions are phrased accordingly.
 
-### Agreement is not accuracy
+### 4.2. Agreement is not accuracy
 
 Agreement between implementations shows that they compute the same quantity. It does not show that the quantity is right. Accuracy was assessed only against synthetic ground truth: the phantom, the simulations on the real gradient tables, and the crossing-fibre and partial-volume scenarios. On real data we report agreement and difference, not error, because the true tensor is unknown and the measurement is limited by noise, by the single-tensor model and by spatial systematic errors in the b-matrix that neither dataset allows us to characterise (Krzyżak et al., 2024, 2025). The phantom and simulations show which weighting scheme is closer to truth under their assumptions. The real data show how large the resulting differences are and how they behave. The two kinds of evidence are kept apart throughout.
 
-### Alternative explanations tested
+### 4.3. Alternative explanations tested
 
 Nine alternative explanations could undermine these conclusions. Each was tested directly.
 
@@ -244,7 +244,7 @@ Nine alternative explanations could undermine these conclusions. Each was tested
 - **Noise alone explains the real-data differences.** This holds to a large extent. Noise added to each voxel's own tensor at the measured noise level reproduced 93% of the Stanford FA offset and 86 to 93% of the MD offsets (Table 7). No gradient-table error or signal dropout was found. Denoising reduced the MD offset by 42 to 58% (Table 8).
 - **The noise model or the b-matrix is wrong.** With non-central χ noise, every arm acquired the same floor bias and the offset between schemes shrank but kept its sign (Supplementary Table S14). With errors in the b-matrix, no bias changed by more than 0.001 unless the error was systematic, and then every arm shifted together (Supplementary Table S15).
 
-### The recommended weighting scheme, and which defaults follow it
+### 4.4. The recommended weighting scheme, and which defaults follow it
 
 Salvador et al. (2005) showed that the weights of a linear tensor fit should come from the signal predicted by a preliminary fit, and Veraart et al. (2013) measured the cost of taking them from the measured signal instead. Our phantoms reproduce that cost for the configurations the toolkits distribute: in the single-fibre region, measured-signal weighting was the only scheme with a substantial MD bias, and its bias grew as SNR fell. On simulated versions of the two real protocols, its MD bias and error were the largest in every condition. Its FA bias was the largest in every condition on the Stanford protocol, but in only 8 of 30 on the Sherbrooke protocol, where it partly offset the upward FA bias that noise causes at low FA.
 
@@ -252,7 +252,7 @@ MRtrix3 and DIPY use predicted-signal weights by default, so both follow the rec
 
 We do not propose a new estimator or contradict the existing recommendation. We show which configurations of widely used toolkits carry the documented bias, that the command does not reveal it, and how large it is at realistic SNR.
 
-### Why a systematic offset matters
+### 4.5. Why a systematic offset matters
 
 A constant bias would cancel if every participant were processed the same way. The test-retest data show that this bias is not constant. On 38 scans from four scanners, the MD offset of measured-signal weighting averaged 9% of MD before preprocessing and 3% after it, but it ranged from 0.3 to 15% between scans and followed each scan's SNR, within a scanner as well as between scanners. Its mean on one scanner was three times its mean on another. The consequence is that measured-signal weighting raised the between-scanner variability of MD by a factor of 1.9 on unprocessed data and 1.6 on preprocessed data, while leaving within-session and between-subject variability unchanged. An estimator that converts differences in SNR into differences in MD adds variance between scanners, which is the component that multi-site studies most need to control.
 
@@ -260,21 +260,21 @@ The same data place the two kinds of difference on one scale. The difference bet
 
 The simulations say why the MD offset follows SNR: the bias scales with 1/SNR², and SNR differs between scanners, coils, protocols and participants. Groups that differ in SNR will differ in MD if they are fitted with measured-signal weights. This matters most for multi-site pooling, normative reference values and comparisons between cohorts acquired differently.
 
-### Multi-shell input
+### 4.6. Multi-shell input
 
 The main analysis gave every toolkit one shell. With both Sherbrooke shells, the three defaults, which agree within 0.0005 µm²/ms on one shell, differed by up to 0.012 µm²/ms in MD, and the measured-signal fit sat 0.13 µm²/ms below them. When the model does not describe the decay across shells, the weighting also decides how the shells are balanced, and the toolkits balance them differently. The grouping of the arms by weighting scheme survived, but the agreement between defaults did not. Studies that fit a single tensor to multi-shell data should expect larger toolkit differences than on one shell, from the same cause.
 
-### The reporting problem
+### 4.7. The reporting problem
 
 Methods sections usually record the toolkit and its version. On this evidence, that level of description is insufficient. Two studies reporting "MRtrix3 3.0.8" may have used different estimators if one passed `-iter 0`. Two studies reporting different toolkits may have used the same one. The toolkit name alone does not tell a reader what was computed.
 
 Three items suffice: the estimator, the source of its weights, and any non-default fitting argument. Our own first analysis illustrates the consequence of omitting them: it compared IWLS with WLS and attributed the difference to the toolkit.
 
-### Inadmissible fits as a quality indicator
+### 4.8. Inadmissible fits as a quality indicator
 
 DIPY's WLS fit returned no negative eigenvalue in any run. FSL and MRtrix3 returned them in up to 5% of Sherbrooke white matter voxels. DIPY's zero count follows from its clipping of negative eigenvalues; before that step its fit has the same rate as FSL's default. The count therefore says nothing about which toolkit fits better, but it says something about the data. It was an order of magnitude higher on Sherbrooke than on Stanford, it fell with denoising, and the voxels concerned cluster where the signal is lowest. A rule on FA and MD alone would have missed most of them, because a tensor with one negative eigenvalue can still have FA below one and MD above zero. Agreement statistics on tensor maps should therefore exclude fits on their eigenvalues, and should report how many were excluded.
 
-### Limitations
+### 4.9. Limitations
 
 The real-data analysis uses one subject from each of two datasets, and one adult for the within-session test-retest. This is enough for the central claim, that two implementations of one estimator agree, because that is a property of the software rather than the sample, and the test-retest cohort adds five adults on four scanners. It is not enough to describe how the difference between schemes varies across populations or acquisitions.
 
@@ -286,7 +286,7 @@ Spatial systematic errors in the b-matrix were not characterised, because neithe
 
 Eddy-current and motion correction were tested only through the dataset's own preprocessing of the test-retest scans. The test-retest analysis uses the white matter mean of each scan; regional variability is larger and was not examined. Only FA and MD from the single tensor were examined. Finally, defaults can change between releases; our results refer to FSL 6.0.7, MRtrix3 3.0.8 and DIPY 1.12.1.
 
-## Conclusion
+## 5. Conclusion
 
 Given identical input and the same estimator, FSL and MRtrix3 return the same diffusion tensor. Differences between these toolkits at the fitting stage are therefore mostly differences between estimators, not implementations. The estimators are set by defaults and options, and the command line does not name them. MRtrix3 reweights its fit twice. DIPY takes its weights from a predicted signal. FSL performs ordinary least squares unless `--wls` is passed.
 
