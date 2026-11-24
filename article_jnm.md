@@ -312,7 +312,7 @@ During the preparation of this work the author used Claude (Anthropic) to assist
 
 ## Data availability
 
-The source code, Dockerfile and analysis scripts are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under the MIT licence. The version reported here is archived on Zenodo as release v1.2.0, under the concept DOI 10.5281/zenodo.22106454. This DOI always resolves to the latest version and lists every archived release. The Stanford HARDI and Sherbrooke 3-shell datasets are distributed openly by the DIPY project at https://dipy.org and are retrieved by `scripts/fetch_sample_data.py`. The MASiVar scans are distributed on OpenNeuro as dataset ds003416 under a CC0 licence and are retrieved by `scripts/fetch_masivar.py`. No registration or credentials are needed to reproduce any result. Supplementary Section S8 lists the commands that regenerate every table.
+The source code, Dockerfile and analysis scripts are openly available at https://github.com/happybrotherhood/dmri-rosetta-stone under the MIT licence. The version reported here is archived on Zenodo as release v1.2.1, under the concept DOI 10.5281/zenodo.22106454. This DOI always resolves to the latest version and lists every archived release. The Stanford HARDI and Sherbrooke 3-shell datasets are distributed openly by the DIPY project at https://dipy.org and are retrieved by `scripts/fetch_sample_data.py`. The MASiVar scans are distributed on OpenNeuro as dataset ds003416 under a CC0 licence and are retrieved by `scripts/fetch_masivar.py`. No registration or credentials are needed to reproduce any result. Supplementary Section S8 lists the commands that regenerate every table.
 
 ## Acknowledgements
 
