@@ -176,11 +176,11 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 
 ## S6. Acquisition parameters, voxel set and noise distribution
 
-**Supplementary Table S8. Acquisition parameters of the two main datasets.** From Rokem et al. (2015) for Stanford. The Sherbrooke dataset has no acquisition paper; its field strength and vendor were stated by one of its authors on the DIPY mailing list (July 2015), and "not documented" marks the parameters no source records. Neither dataset documents its parallel-imaging factor, partial-Fourier factor or reconstruction.
+**Supplementary Table S8. Acquisition parameters of the two main datasets.** From Rokem et al. (2015) for Stanford. The Sherbrooke dataset has no acquisition paper; its field strength and vendor were stated by one of its authors on the DIPY mailing list (Descoteaux, 2015), and "not documented" marks the parameters no source records. Neither dataset documents its parallel-imaging factor, partial-Fourier factor or reconstruction.
 
 | Parameter | Stanford HARDI | Sherbrooke 3-shell |
 |---|---|---|
-| Scanner | 3 T GE Discovery MR750 | 1.5 T Siemens (M. Descoteaux, DIPY mailing list, July 2015); model not documented |
+| Scanner | 3 T GE Discovery MR750 | 1.5 T Siemens (Descoteaux, 2015); model not documented |
 | Head coil | 32-channel | not documented |
 | Sequence | twice-refocused spin-echo EPI | not documented |
 | TE / TR | 93.6 ms / not reported | not documented |
@@ -509,6 +509,8 @@ python scripts/test_retest_analysis.py --source prequal -> test_retest_b1000_pre
 ## Supplementary references
 
 Andersson JLR and Sotiropoulos SN (2016) An integrated approach to correction for off-resonance effects and subject movement in diffusion MR imaging. *NeuroImage* 125, 1063–1078. doi: 10.1016/j.neuroimage.2015.10.019
+
+Descoteaux M (2015) Re: Scanning parameters of Dipy's sample data Sherbrooke's 3 shells. Message to the Neuroimaging mailing list, 9 July 2015. Available at: https://mail.python.org/pipermail/neuroimaging/2015-July/000089.html
 
 Jeurissen B, Tournier JD, Dhollander T, Connelly A, and Sijbers J (2014) Multi-tissue constrained spherical deconvolution for improved analysis of multi-shell diffusion MRI data. *NeuroImage* 103, 411–426. doi: 10.1016/j.neuroimage.2014.07.061
 
