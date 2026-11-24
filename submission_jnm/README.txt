@@ -13,6 +13,8 @@ supplementary.docx          Supplementary Material: Sections S1-S8, Tables S1-S1
 Figure1.tif                 design of the comparison
 Figure2.tif                 agreement with the estimator matched, Stanford HARDI
                             (FAST white matter, eigenvalue admissibility)
+Figure3.tif                 estimator offset on the MASiVar test-retest scans
+Figure4.tif                 phantom bias against SNR; observed offset against noise
 FigureS1-S5.tif             supplementary figures, also as separate files
                             (S1 interface, S2-S3 brain masks, S4 Sherbrooke
                             agreement, S5 inadmissible fits)

@@ -17,7 +17,7 @@ I am grateful to both reviewers. Their comments led to four additions that stren
 - **Accuracy and agreement kept apart.** The title and conclusions no longer claim that implementation differences do not exist. Agreement between implementations is presented as a control, accuracy is assessed only against synthetic truth, and the Discussion says what the real data can and cannot show, including the limits set by the noise model and by spatial systematic errors.
 - **Priority.** The Introduction now credits Salvador et al. (2005) for predicted-signal weighting and positions Veraart et al. (2013) as the study that quantified the cost of the alternative.
 
-All numbers in the manuscript were regenerated on the new voxel set with the corrected rule. The main conclusions are unchanged. The structure of the tables is unchanged, and two tables were added.
+All numbers in the manuscript were regenerated on the new voxel set with the corrected rule. The main conclusions are unchanged. The structure of the tables is unchanged; one table and two figures were added.
 
 ## Reproducibility
 

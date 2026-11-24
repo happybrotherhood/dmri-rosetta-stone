@@ -21,6 +21,7 @@ TIFF 2126 px wide (the width of the submitted figures).
 Usage:
     python scripts/revision_figures.py
 """
+import re
 import sys
 from pathlib import Path
 
@@ -136,3 +137,141 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ----------------------------------------------------------------------------
+# Figures 3 and 4 of the revised manuscript
+ARM_STYLE = {   # colour follows the toolkit (Figure 2); the matched pair shares one line
+    "fsl_ols":  dict(color=COLORS["FSL"], marker="o", mfc="white", mec=COLORS["FSL"], mew=1.4, ls="--", label="FSL default (OLS)"),
+    "fsl_wls":  dict(color=COLORS["FSL"], marker="o", mec="white", mew=0.6, label="FSL --wls = MRtrix3 -iter 0 (measured-signal weights)"),
+    "mrt_iwls": dict(color=COLORS["MRtrix3"], marker="s", mec="white", mew=0.6, label="MRtrix3 default (IWLS)"),
+    "dipy_wls": dict(color=COLORS["DIPY"], marker="^", mec="white", mew=0.6, label="DIPY WLS (default)"),
+}
+SCANNER_STYLE = {   # Okabe-Ito hues, fixed order, plus marker shape as a second encoding
+    "1A": dict(color="#0072B2", marker="o", label="site 1, scanner A (Philips)"),
+    "1B": dict(color="#E69F00", marker="s", label="site 1, scanner B (Philips)"),
+    "2":  dict(color="#009E73", marker="^", label="site 2 (GE)"),
+    "3":  dict(color="#CC79A7", marker="D", label="site 3 (Siemens)"),
+}
+
+
+def read_tsv(path):
+    rows = [l.split("\t") for l in Path(path).read_text().splitlines()]
+    hdr = rows[0]
+    return [dict(zip(hdr, r)) for r in rows[1:]]
+
+
+def test_retest_figure():
+    raw = read_tsv(ROOT / "test_retest_scans_b1000.tsv")
+    pre = read_tsv(ROOT / "test_retest_scans_b1000_prequal.tsv")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.6), gridspec_kw={"width_ratios": [1, 1, 1.35]})
+    for ax, rows, title in ((axes[0], raw, "Unprocessed"), (axes[1], pre, "After PreQual preprocessing")):
+        for sc, st in SCANNER_STYLE.items():
+            pts = [(float(r["snr_b0"]), float(r["fsl_wls_MD"]) - float(r["dipy_wls_MD"]))
+                   for r in rows if r["scanner"] == sc and r["snr_b0"] != "nan"]
+            if pts:
+                ax.plot(*zip(*pts), linestyle="none", markersize=7, mec="white", mew=0.6, **st)
+        ax.axhline(0, color="0.6", lw=0.8)
+        ax.set_xlabel("b = 0 SNR of the scan (white matter)")
+        ax.set_ylabel("MD offset between weighting schemes (µm²/ms)")
+        ax.set_title(title, fontsize=11)
+        ax.set_ylim(-0.11, 0.01)
+        ax.grid(axis="y", color="0.9", lw=0.6)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+    axes[0].legend(fontsize=8, frameon=False, loc="lower right")
+    # panel C: MD of each arm per scan, scans grouped by scanner (unprocessed)
+    ax = axes[2]
+    order = ["1A", "1B", "2", "3"]
+    rows = sorted(raw, key=lambda r: (order.index(r["scanner"]), r["sub"], r["ses"], r["run"]))
+    x = np.arange(len(rows))
+    for arm, st in ARM_STYLE.items():
+        ax.plot(x, [float(r[f"{arm}_MD"]) for r in rows], **{**st, "ls": "none", "markersize": 5})
+    bounds = [i for i in range(1, len(rows)) if rows[i]["scanner"] != rows[i - 1]["scanner"]]
+    for b in bounds:
+        ax.axvline(b - 0.5, color="0.8", lw=0.8)
+    starts = [0] + bounds + [len(rows)]
+    for s0, s1 in zip(starts[:-1], starts[1:]):
+        ax.text((s0 + s1 - 1) / 2, 0.505, SCANNER_STYLE[rows[s0]["scanner"]]["label"].replace(" (", "\n("),
+                ha="center", va="bottom", fontsize=8, color="0.3")
+    ax.set_xlabel("scan (38 scans, grouped by scanner)")
+    ax.set_ylabel("white matter mean MD (µm²/ms)")
+    ax.set_title("MD of each estimator, unprocessed scans", fontsize=11)
+    ax.set_xticks([])
+    ax.set_ylim(0.50, 0.82)
+    ax.grid(axis="y", color="0.9", lw=0.6)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    ax.legend(fontsize=8, frameon=False, loc="upper left", bbox_to_anchor=(0.0, 0.98))
+    ax.set_ylim(0.50, 0.86)
+    for ax, lab in zip(axes, "ABC"):
+        ax.text(-0.08, 1.04, lab, transform=ax.transAxes, fontsize=13, fontweight="bold")
+    fig.tight_layout()
+    save(fig, "fig3_test_retest")
+
+
+def parse_table7(path):
+    """The 'Table 7 values' blocks of sherbrooke_fa_diagnosis.txt, per dataset."""
+    txt = Path(path).read_text().splitlines()
+    out, subj = {}, None
+    for i, line in enumerate(txt):
+        m = re.match(r"(stanford|sherbrooke):", line)
+        if m:
+            subj = m.group(1)
+        if line.startswith("Table 7 values") and subj:
+            rows = []
+            for l in txt[i + 2:i + 9]:
+                parts = l.split()
+                if not parts or parts[0] == "all":
+                    continue
+                vals = [float(v.split("±")[0]) for v in parts[2:]]
+                rows.append((parts[0], vals))      # FA obs, FA 1.00, FA 1.27, MD obs, MD 1.00, MD 1.27
+            out[subj] = rows
+    return out
+
+
+def bias_figure():
+    import re as _re
+    globals()["re"] = _re
+    snr = [30, 20, 10]
+    phantom = {   # Table 6, MD bias (um^2/ms) in the single-fibre region
+        "fsl_wls": [-0.0065, -0.0147, -0.0542], "dipy_wls": [0.0001, -0.0001, -0.0022],
+        "mrt_iwls": [0.0004, 0.0007, 0.0006], "fsl_ols": [0.0004, 0.0007, 0.0011]}
+    t7 = parse_table7(ROOT / "sherbrooke_fa_diagnosis.txt")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.6))
+    ax = axes[0]
+    for arm, st in ARM_STYLE.items():
+        ax.plot(snr, phantom[arm], **{**st, "lw": 2, "markersize": 7})
+    ax.axhline(0, color="0.6", lw=0.8)
+    ax.invert_xaxis()
+    ax.set_xticks(snr)
+    ax.set_xlabel("b = 0 SNR of the phantom (noise increases to the right)")
+    ax.set_ylabel("MD bias, estimate minus truth (µm²/ms)")
+    ax.set_title("Phantom with known eigenvalues", fontsize=11)
+    ax.legend(fontsize=8, frameon=False, loc="lower left")
+    for ax, subj, title in ((axes[1], "stanford", "Stanford HARDI (b = 2000)"), (axes[2], "sherbrooke", "Sherbrooke (b = 1000)")):
+        rows = t7[subj]
+        x = np.arange(len(rows))
+        obs = [v[3] for _, v in rows]; s100 = [v[4] for _, v in rows]; s127 = [v[5] for _, v in rows]
+        ax.plot(x, obs, color="0.15", marker="o", lw=2, markersize=7, mec="white", label="observed, real data")
+        ax.plot(x, s127, color=COLORS["DIPY"], marker="^", lw=2, markersize=7, mec="white", label="noise on the real tensors, 1.27σ")
+        ax.plot(x, s100, color=COLORS["DIPY"], marker="^", mfc="white", lw=1.5, ls="--", markersize=7, label="noise on the real tensors, 1.00σ")
+        ax.set_xticks(x)
+        ax.set_xticklabels([b for b, _ in rows])
+        ax.set_xlabel("FA bin (DIPY fit)")
+        ax.set_ylabel("MD offset between weighting schemes (µm²/ms)")
+        ax.set_title(title, fontsize=11)
+        ax.legend(fontsize=8, frameon=False, loc="lower left")
+    for ax in axes:
+        ax.grid(axis="y", color="0.9", lw=0.6)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+    for ax, lab in zip(axes, "ABC"):
+        ax.text(-0.08, 1.04, lab, transform=ax.transAxes, fontsize=13, fontweight="bold")
+    fig.tight_layout()
+    save(fig, "fig4_bias_and_noise")
+
+
+if __name__ == "__main__" and "--new" in sys.argv:
+    test_retest_figure()
+    bias_figure()
