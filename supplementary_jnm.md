@@ -233,18 +233,26 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 
 In FAST white matter, FSL `--wls` and MRtrix3 `-iter 0` agree in FA, MD and all six tensor components with median absolute differences below 10⁻⁷ and 1 − r of about 10⁻¹¹, the resolution of the float32 maps. Over the whole brain mask on Stanford, 3.6% of voxels (6,687) differ by more than 0.001 in FA (maximum 0.20); they lie outside white matter and 78% contain a measurement below half the noise SD. The cause is the signal floor. `dtifit` first fits the tensor with the logarithm of non-positive measurements set to zero, takes S₀ from that fit, replaces every measurement below 1% of S₀ by 1% of S₀, and fits again; `dwi2tensor` floors at 10⁻⁶ of the voxel's maximum. All 6,687 differing voxels are voxels in which FSL's floor binds (it binds in 13% of brain voxels and in 218 white matter voxels). A reimplementation with FSL's rule reproduces `dtifit --wls` over the whole brain to a mean absolute FA difference of 0.00013 and `dtifit` (OLS) to 0.00013; the 517 voxels that still differ by more than 0.001 all contain a measurement at or below zero, which the two steps of `dtifit` treat differently from one another. On Sherbrooke, ten brain voxels differ by more than 0.001, all with a non-positive measurement.
 
-**Supplementary Table S12. Implementation agreement and inadmissible fits in detail.** Top: quantiles of the absolute difference between FSL `--wls` and MRtrix3 `-iter 0` in FA, MD (µm²/ms) and the six tensor components (µm²/ms, in a common frame), over FAST white matter voxels admissible in both. Middle: inadmissible fits by type for every arm, as a percentage of brain-mask voxels and of white matter voxels, including DIPY's WLS fit before its eigenvalue clipping (recovered with the reimplemented estimator, which reproduces DIPY's clipped FA to 10⁻⁷). Bottom: where the inadmissible voxels of the Table 2 arms lie.
+**Supplementary Table S12. Implementation agreement and inadmissible fits in detail.** Top: median, 95th, 99th and 99.9th percentiles and maximum of the absolute difference between FSL `--wls` and MRtrix3 `-iter 0` in FA, in MD (µm²/ms) and in each of the six tensor components (µm²/ms, in a common frame), over FAST white matter voxels admissible in both (96,773 on Stanford, 94,829 on Sherbrooke). Middle: inadmissible fits by type for every arm, as a percentage of brain-mask voxels and of white matter voxels, including DIPY's WLS fit before its eigenvalue clipping (recovered with the reimplemented estimator, which reproduces DIPY's clipped FA to 10⁻⁷). Bottom: where the inadmissible voxels of the Table 2 arms lie.
 
 | Dataset | Quantity | 50th | 95th | 99th | 99.9th | Maximum |
 |---|---|---|---|---|---|---|
-| Stanford | FA | 7 × 10⁻⁹ | 4 × 10⁻⁸ | 6 × 10⁻⁸ | 6 × 10⁻⁶ | 1.1 × 10⁻⁴ |
-|  | MD | 0 | 6 × 10⁻⁸ | 6 × 10⁻⁸ | 4 × 10⁻⁶ | 1.1 × 10⁻⁴ |
-|  | Dxx, Dyy, Dzz | 0 | 6 × 10⁻⁸ | 6 × 10⁻⁸ | 3–5 × 10⁻⁶ | 1.8–3.3 × 10⁻⁴ |
-|  | Dxy, Dxz, Dyz | 3–7 × 10⁻⁹ | 1 × 10⁻⁸ | 3 × 10⁻⁸ | 3–4 × 10⁻⁶ | 1.2–1.5 × 10⁻⁴ |
-| Sherbrooke | FA | 3 × 10⁻⁸ | 6 × 10⁻⁸ | 1 × 10⁻⁷ | 3 × 10⁻⁶ | 5.4 × 10⁻⁵ |
-|  | MD | 3 × 10⁻⁸ | 6 × 10⁻⁸ | 1 × 10⁻⁷ | 1 × 10⁻⁶ | 3.5 × 10⁻⁵ |
-|  | Dxx, Dyy, Dzz | 1–3 × 10⁻⁸ | 6 × 10⁻⁸ | 1 × 10⁻⁷ | 1–2 × 10⁻⁶ | 0.7–1.0 × 10⁻⁴ |
-|  | Dxy, Dxz, Dyz | 1 × 10⁻⁸ | 1–3 × 10⁻⁸ | 3 × 10⁻⁸ | 1 × 10⁻⁶ | 4–8 × 10⁻⁵ |
+| Stanford | FA | 7.4 × 10⁻⁹ | 3.7 × 10⁻⁸ | 6.0 × 10⁻⁸ | 5.8 × 10⁻⁶ | 1.1 × 10⁻⁴ |
+|  | MD | 0 | 5.8 × 10⁻⁸ | 5.8 × 10⁻⁸ | 4.2 × 10⁻⁶ | 1.1 × 10⁻⁴ |
+|  | Dxx | 0 | 5.8 × 10⁻⁸ | 5.8 × 10⁻⁸ | 5.2 × 10⁻⁶ | 2.7 × 10⁻⁴ |
+|  | Dyy | 0 | 2.9 × 10⁻⁸ | 5.8 × 10⁻⁸ | 4.0 × 10⁻⁶ | 1.8 × 10⁻⁴ |
+|  | Dzz | 0 | 5.8 × 10⁻⁸ | 5.8 × 10⁻⁸ | 2.9 × 10⁻⁶ | 3.3 × 10⁻⁴ |
+|  | Dxy | 7.3 × 10⁻⁹ | 1.5 × 10⁻⁸ | 2.9 × 10⁻⁸ | 4.0 × 10⁻⁶ | 1.2 × 10⁻⁴ |
+|  | Dxz | 2.7 × 10⁻⁹ | 1.1 × 10⁻⁸ | 2.9 × 10⁻⁸ | 3.0 × 10⁻⁶ | 1.5 × 10⁻⁴ |
+|  | Dyz | 3.6 × 10⁻⁹ | 1.1 × 10⁻⁸ | 1.5 × 10⁻⁸ | 2.5 × 10⁻⁶ | 1.2 × 10⁻⁴ |
+| Sherbrooke | FA | 3.0 × 10⁻⁸ | 6.0 × 10⁻⁸ | 1.2 × 10⁻⁷ | 2.5 × 10⁻⁶ | 5.3 × 10⁻⁵ |
+|  | MD | 2.9 × 10⁻⁸ | 5.8 × 10⁻⁸ | 1.2 × 10⁻⁷ | 1.5 × 10⁻⁶ | 3.5 × 10⁻⁵ |
+|  | Dxx | 2.9 × 10⁻⁸ | 5.8 × 10⁻⁸ | 1.2 × 10⁻⁷ | 1.8 × 10⁻⁶ | 1.0 × 10⁻⁴ |
+|  | Dyy | 7.3 × 10⁻⁹ | 5.8 × 10⁻⁸ | 1.2 × 10⁻⁷ | 2.0 × 10⁻⁶ | 6.6 × 10⁻⁵ |
+|  | Dzz | 2.9 × 10⁻⁸ | 5.8 × 10⁻⁸ | 1.2 × 10⁻⁷ | 1.2 × 10⁻⁶ | 8.4 × 10⁻⁵ |
+|  | Dxy | 7.3 × 10⁻⁹ | 1.5 × 10⁻⁸ | 2.9 × 10⁻⁸ | 1.4 × 10⁻⁶ | 3.8 × 10⁻⁵ |
+|  | Dxz | 1.5 × 10⁻⁸ | 2.9 × 10⁻⁸ | 3.6 × 10⁻⁸ | 1.4 × 10⁻⁶ | 5.2 × 10⁻⁵ |
+|  | Dyz | 7.3 × 10⁻⁹ | 2.2 × 10⁻⁸ | 2.9 × 10⁻⁸ | 1.1 × 10⁻⁶ | 7.9 × 10⁻⁵ |
 
 | Dataset | Arm | Negative eigenvalue, brain / WM | Largest > 3.0, brain / WM | Any, brain / WM | Missed by the FA–MD rule, brain / WM |
 |---|---|---|---|---|---|
