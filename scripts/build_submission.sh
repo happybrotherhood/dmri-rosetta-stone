@@ -30,4 +30,21 @@ pandoc response_to_reviewers_jnm.md -f markdown-smart -o "$OUT/response_to_revie
     --reference-doc=templates/reference_highlights.docx
 
 "$PY" scripts/polish_docx.py "$OUT/manuscript.docx" "$OUT/supplementary.docx"
+"$PY" - "$OUT" <<'EOF'
+# Strip pandoc's heading bookmarks from the short documents too; Word draws
+# them as grey square brackets when "Show bookmarks" is enabled.
+import sys, zipfile, shutil
+from pathlib import Path
+sys.path.insert(0, "scripts")
+from polish_docx import strip_bookmarks
+for name in ("cover_letter", "response_to_reviewers", "highlights"):
+    p = Path(sys.argv[1]) / f"{name}.docx"; tmp = p.with_suffix(".tmp.docx")
+    with zipfile.ZipFile(p) as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+        for it in zin.infolist():
+            d = zin.read(it.filename)
+            if it.filename == "word/document.xml":
+                d = strip_bookmarks(d.decode())[0].encode()
+            zout.writestr(it, d)
+    shutil.move(tmp, p)
+EOF
 echo "built $OUT/"
