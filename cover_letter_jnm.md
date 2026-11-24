@@ -5,7 +5,7 @@ busra.mutlu_ipek@kcl.ac.uk
 
 Dear Editor,
 
-Thank you for the opportunity to revise manuscript JNEUMETH-D-26-00997. I am submitting the revised version, now titled **"Estimator choice, not implementation, accounts for most of the difference in diffusion tensor fitting between FSL, MRtrix3 and DIPY"**, together with a point-by-point response to the two reviewers.
+Thank you for the opportunity to revise manuscript JNEUMETH-D-26-00997. I am submitting the revised version, now titled **"Diffusion tensor fitting across FSL, MRtrix3 and DIPY: the impact of estimator choice on reproducibility"**, together with a point-by-point response to the two reviewers.
 
 I am grateful to both reviewers. Their comments led to four additions that strengthen the manuscript, and to one correction.
 

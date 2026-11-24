@@ -1,4 +1,4 @@
-# Estimator choice, not implementation, accounts for most of the difference in diffusion tensor fitting between FSL, MRtrix3 and DIPY
+# Diffusion tensor fitting across FSL, MRtrix3 and DIPY: the impact of estimator choice on reproducibility
 
 **Busra Mutlu Ipek**¹\*
 
@@ -224,7 +224,7 @@ On one shell, the defaults agree with one another in MD within 0.002 µm²/ms. M
 
 This result changes the meaning of "software-related variability" for the tensor fit. The differences in our first analysis were real, but they were not differences between codebases. They were differences between estimators, bundled as defaults or options. The two require different remedies: a difference between codebases must be corrected by the developers, whereas a difference between estimators can be removed by the analyst with one command-line argument.
 
-The title refers to most of the difference rather than all of it, for two reasons. DIPY replaces negative eigenvalues with a small positive value before computing FA and MD, and FSL and MRtrix3 do not. This is an implementation choice, and on Sherbrooke it changes values in 3% of white matter voxels. And in voxels with very low signal outside white matter, FSL and MRtrix3 differ because they floor the signal differently, FSL at 1% of S₀ and MRtrix3 at 10⁻⁶ of the voxel maximum (Supplementary Table S11). Neither affects the comparison in white matter once inadmissible fits are excluded, but both are implementation differences, and the title and conclusions are phrased accordingly.
+The title refers to the effect of estimator choice rather than claiming that implementation differences do not exist, for two reasons. DIPY replaces negative eigenvalues with a small positive value before computing FA and MD, and FSL and MRtrix3 do not. This is an implementation choice, and on Sherbrooke it changes values in 3% of white matter voxels. And in voxels with very low signal outside white matter, FSL and MRtrix3 differ because they floor the signal differently, FSL at 1% of S₀ and MRtrix3 at 10⁻⁶ of the voxel maximum (Supplementary Table S11). Neither affects the comparison in white matter once inadmissible fits are excluded, but both are implementation differences, and the title and conclusions are phrased accordingly.
 
 ### 4.2. Agreement is not accuracy
 

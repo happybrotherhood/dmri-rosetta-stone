@@ -1,6 +1,6 @@
 # Supplementary Material
 
-**Diffusion MRI toolkits differ in which estimator they use, not in how they implement the tensor fit**
+**Diffusion tensor fitting across FSL, MRtrix3 and DIPY: the impact of estimator choice on reproducibility**
 
 Busra Mutlu Ipek, Neuroimaging and Biophysics Lab (NBL), Department of Neuroimaging, King's College London
 
