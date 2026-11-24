@@ -148,13 +148,13 @@ def main():
              "Rician noise at each voxel's measured σ",
              "Table 7  ·  Tables S3–S5  ·  Figure 4"),
             ("Repeated scans, four scanners",
-             "variability within and between session\n"
-             "and between scanner, against the estimator offset",
+             "variability within session, between session\n"
+             "and between scanner, against the offset",
              "Table 10  ·  Figure 3"))):
         xb = xs + k * (wb + gb)
         box(ax, xb, -0.30, wb, 1.42, ec=RULE, lw=1.0, ls=(0, (3, 2)))
-        text(ax, xb + wb / 2, 0.88, title, size=7.8, weight="bold", color=INK)
-        text(ax, xb + wb / 2, 0.40, body, size=6.5, color=RULE)
+        text(ax, xb + wb / 2, 0.88, title, size=7.5, weight="bold", color=INK)
+        text(ax, xb + wb / 2, 0.40, body, size=6.3, color=RULE)
         text(ax, xb + wb / 2, -0.10, ref, size=7.6, weight="bold", color=INK)
 
     # ── Execution environment ────────────────────────────────────────────────
