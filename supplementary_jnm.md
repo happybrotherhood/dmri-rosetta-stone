@@ -191,7 +191,7 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 | Volumes used in the main analysis | all 160 | 65 (b = 0 and b = 1000 s/mm²) |
 | Parallel imaging, partial Fourier, reconstruction | not documented | not documented |
 
-**Supplementary Table S9. Noise distribution in the Sherbrooke background.** Magnitude of the b = 0 volume in 31,104 voxels of the four corners of the field of view, far from the head: mean 19.9, median 19.0, SD 6.3, no zero values. For magnitude noise from L complex channels with no signal, the ratios of the quantiles do not depend on σ and narrow as L grows; the observed ratios are compared with simulated ones. The Rician-corrected σ of the background (mean divided by √(π/2)) is 15.9, against 22.3 from MP-PCA in white matter and 15.1 from PIESNO. The Stanford background could not be examined: 39% of voxels outside the brain are exactly zero and the rest carry ghosting.
+**Supplementary Table S9. Noise distribution in the Sherbrooke background.** Magnitude of the b = 0 volume in 31,104 voxels of the four corners of the field of view, far from the head: mean 19.9, median 19.0, SD 6.3, no zero values. For magnitude noise from L complex channels with no signal, the ratios of the quantiles do not depend on σ and narrow as L grows; the observed ratios are compared with simulated ones. The Rician-corrected σ of the background (mean divided by √(π/2)) is 15.9, against 22.3 from MP-PCA in white matter and 15.1 from PIESNO (Koay et al., 2009). The Stanford background could not be examined: 39% of voxels outside the brain are exactly zero and the rest carry ghosting.
 
 | Distribution | p75 / p25 | p90 / p10 | median / mean |
 |---|---|---|---|
