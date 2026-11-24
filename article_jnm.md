@@ -2,9 +2,9 @@
 
 **Busra Mutlu Ipek**¹\*
 
-¹ Department of Neuroimaging, King's College London, London, United Kingdom
+¹ Neuroimaging and Biophysics Lab (NBL), Department of Neuroimaging, King's College London, London, United Kingdom
 
-\* **Corresponding author.** Busra Mutlu Ipek, Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: busra.mutlu_ipek@kcl.ac.uk
+\* **Corresponding author.** Busra Mutlu Ipek, Neuroimaging and Biophysics Lab (NBL), Department of Neuroimaging, King's College London, De Crespigny Park, London SE5 8AF, United Kingdom. E-mail: busra.mutlu_ipek@kcl.ac.uk
 
 ## Abstract
 
