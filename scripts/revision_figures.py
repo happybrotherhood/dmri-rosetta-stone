@@ -86,7 +86,7 @@ def agreement_figure(subj):
         ax.set_aspect("equal")
         ax.legend(fontsize=7)
         bland_altman(fig.add_subplot(gs[2, col]), a, b, ta, tb, unit="FA")
-    fig.suptitle(f"FA agreement with the estimator matched — {DATASET_TITLES.get(subj, subj)}\n"
+    fig.suptitle(f"FA agreement with the estimator matched, {DATASET_TITLES.get(subj, subj)}\n"
                  f"FAST white matter, tensors admissible in both arms",
                  fontsize=13, fontweight="bold", y=1.02)
     save(fig, f"fig2_agreement_{subj}")

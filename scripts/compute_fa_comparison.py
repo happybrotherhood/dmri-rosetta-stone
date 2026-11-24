@@ -283,7 +283,7 @@ def make_figure3(metrics, wm_mask, pairs, z_idx, fig_dir, subj):
         ax_ba = fig.add_subplot(gs[2, col])
         bland_altman(ax_ba, a, b, ta, tb, unit="FA")
 
-    fig.suptitle(f"FA agreement across FSL, MRtrix3 and DIPY — {DATASET_TITLES.get(subj, subj)}",
+    fig.suptitle(f"FA agreement across FSL, MRtrix3 and DIPY, {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=1.01)
     for ext in ("png", "pdf"):
         out = fig_dir / f"fig3_fa_comparison_{subj}{TAG}.{ext}"
@@ -310,7 +310,7 @@ def make_figure4(masks, b0, z_idx, fig_dir, subj):
                      fontsize=11, color=COLORS[tool], fontweight="bold")
         ax.axis("off")
 
-    fig.suptitle(f"Brain extraction comparison — {DATASET_TITLES.get(subj, subj)}",
+    fig.suptitle(f"Brain extraction comparison, {DATASET_TITLES.get(subj, subj)}",
                  fontsize=13, fontweight="bold", y=0.97)
     # Reserve the top strip for the suptitle. Without the rect, tight_layout
     # packs the panels up against it and the per-panel titles collide with it
