@@ -39,7 +39,7 @@ When a toolkit lacks a stage, the page says so; for example, FSL has no denoiser
 |---|---|
 | **Project name** | dMRI Rosetta Stone |
 | **Project home page** | https://github.com/happybrotherhood/dmri-rosetta-stone |
-| **Archived version** | Release v1.1.0, Zenodo concept DOI 10.5281/zenodo.22106454 |
+| **Archived version** | Release v1.2.1, Zenodo concept DOI 10.5281/zenodo.22106454 |
 | **Operating system** | Platform independent (Linux, macOS, Windows) via Docker |
 | **Programming language** | Python 3.12 |
 | **Other requirements** | Docker ≥ 20.10 |
@@ -190,6 +190,8 @@ Supplementary Figure S4 repeats Figure 2 of the main text for the Sherbrooke dat
 | Diffusion weighting | 150 directions at b = 2000 s/mm² | 64 directions at each of b = 1000, 2000 and 3500 s/mm² |
 | Volumes used in the main analysis | all 160 | 65 (b = 0 and b = 1000 s/mm²) |
 | Parallel imaging, partial Fourier, reconstruction | not documented | not documented |
+
+*Independent estimates of σ.* The MP-PCA σ used in the simulations was 18.0 on Stanford and 22.3 on Sherbrooke (white matter medians). On Stanford, the SD across the ten b = 0 volumes, corrected for the small-sample bias of the SD, was 1.27 times the MP-PCA value (95% bootstrap confidence interval over voxels 1.26 to 1.27; interquartile range over voxels 1.04 to 1.53), PIESNO gave 17.4, and the robust SD of the tensor residuals, an upper bound because it contains model error, gave 22.9. On Sherbrooke, which has one b = 0 volume, PIESNO gave 15.1, the Rician-corrected background 15.9 and the residual bound 27.1. The estimates therefore span 17.4 to 22.9 on Stanford and 15.1 to 27.1 on Sherbrooke; the bootstrap interval describes the sampling error of the 1.27 ratio only, and the ratio was not validated on Sherbrooke. These values are produced by `scripts/noise_level_uncertainty.py` (Section S8).
 
 **Supplementary Table S9. Noise distribution in the Sherbrooke background.** Magnitude of the b = 0 volume in 31,104 voxels of the four corners of the field of view, far from the head: mean 19.9, median 19.0, SD 6.3, no zero values. For magnitude noise from L complex channels with no signal, the ratios of the quantiles do not depend on σ and narrow as L grows; the observed ratios are compared with simulated ones. The Rician-corrected σ of the background (mean divided by √(π/2)) is 15.9, against 22.3 from MP-PCA in white matter and 15.1 from PIESNO (Koay et al., 2009). The Stanford background could not be examined: 39% of voxels outside the brain are exactly zero and the rest carry ghosting.
 
