@@ -8,13 +8,13 @@
 
 ## Abstract
 
-**Background.** Weighting a linear tensor fit by the measured signal biases it; weights from a predicted signal do not (Salvador et al., 2005; Veraart et al., 2013). Which toolkit configurations apply each scheme, and whether it matters next to test-retest variability, is unknown.
+**Background.** Weighting a linear tensor fit by the measured signal biases it; weights from a predicted signal do not (Salvador et al., 2005). Which toolkit configurations apply each scheme, and whether it matters next to test-retest variability, is unknown.
 
 **New method.** Tensors were fitted with FSL, MRtrix3 and DIPY on identical input from two open datasets and 38 test-retest scans, so only the estimator varied. Agreement was measured on white matter defined without any tensor fit, keeping only fits with admissible eigenvalues. The schemes were scored against phantoms and simulations with crossing fibres and partial volume.
 
-**Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. MRtrix3 and DIPY weight by a predicted signal by default; FSL fits ordinary least squares, and its `--wls` option uses the measured signal. That option gave MD 0.02 to 0.09 µm²/ms lower than every other estimator, with a bias growing as SNR fell, and raised between-scanner MD variability 1.6 to 1.9 times. The three defaults differed by less than test-retest variability.
+**Results.** FSL `dtifit --wls` and MRtrix3 `dwi2tensor -iter 0` implement the same estimator and returned the same tensor in every white matter voxel. MRtrix3 and DIPY weight by a predicted signal by default; FSL fits ordinary least squares, and its `--wls` option uses the measured signal. That option gave MD up to 0.09 µm²/ms lower than every other estimator, with a bias growing as SNR fell, and raised between-scanner MD variability up to 1.9 times. The three defaults differed by less than test-retest variability.
 
-**Comparison with existing methods.** Previous studies documented variability between whole pipelines; here the variability from the tensor fit is traced to one estimator, selected by a command-line option.
+**Comparison with existing methods.** Previous studies documented variability between whole pipelines; here it is traced to one estimator, selected by a command-line option.
 
 **Conclusions.** For these toolkits and versions, the estimator, not the implementation, determines the result. The toolkit name does not identify the estimator; the estimator and its weights do. Measured-signal weighting adds between-scanner variance that grows as SNR falls.
 
