@@ -47,4 +47,5 @@ for name in ("cover_letter", "response_to_reviewers", "highlights"):
             zout.writestr(it, d)
     shutil.move(tmp, p)
 EOF
+"$PY" scripts/uniform_format.py "$OUT"/manuscript.docx "$OUT"/supplementary.docx "$OUT"/highlights.docx "$OUT"/cover_letter.docx "$OUT"/response_to_reviewers.docx
 echo "built $OUT/"
