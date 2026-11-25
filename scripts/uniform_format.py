@@ -93,6 +93,11 @@ def fix_part(xml_bytes, is_styles):
                 if rpr is None:
                     rpr = etree.SubElement(style, q("rPr"))
                     fix_rpr(rpr)
+                # Headings keep their weight once colour and size no longer
+                # distinguish them from the body text.
+                if re.match(r"(?i)heading\d|title$", style.get(q("styleId"), "")):
+                    set_child(rpr, "b", {})
+                    set_child(rpr, "bCs", {})
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True), n
 
 
